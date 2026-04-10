@@ -226,36 +226,51 @@ export default function OrdenDetalle({
         </div>
       </div>
 
-      {/* Auditoría */}
-      {auditoria.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">Historial de cambios</h2>
-          </div>
-          <div className="divide-y divide-gray-50 max-h-64 overflow-y-auto">
-            {auditoria.map((a: any) => (
-              <div key={a.id} className="px-5 py-3 flex items-center justify-between text-sm">
-                <div>
-                  <span className="font-medium text-gray-700">{a.usuario_nombre}</span>
-                  <span className="text-gray-500"> cambió </span>
-                  <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded">{a.campo}</span>
-                  <span className="text-gray-500"> de </span>
-                  <span className={`font-medium ${a.valor_anterior === 'false' ? 'text-red-500' : 'text-green-500'}`}>
-                    {a.valor_anterior === 'true' ? 'Sí' : a.valor_anterior === 'false' ? 'No' : a.valor_anterior}
-                  </span>
-                  <span className="text-gray-500"> a </span>
-                  <span className={`font-medium ${a.valor_nuevo === 'true' ? 'text-green-500' : 'text-red-500'}`}>
-                    {a.valor_nuevo === 'true' ? 'Sí' : a.valor_nuevo === 'false' ? 'No' : a.valor_nuevo}
+      {/* Historial */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100">
+          <h2 className="font-semibold text-gray-900">Historial de cambios</h2>
+        </div>
+        {auditoria.length === 0 ? (
+          <p className="px-5 py-6 text-sm text-gray-400 text-center">Sin cambios registrados</p>
+        ) : (
+          <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
+            {auditoria.map((a: any) => {
+              const campoLabel: Record<string, string> = {
+                listo_despacho: 'Listo para despacho',
+                despachado_ok:  'Despachado OK',
+                ejecutivo_id:   'Ejecutivo asignado',
+                estado:         'Estado',
+              }
+              const formatVal = (v: string) => {
+                if (v === 'true')  return { txt: 'Sí',  cls: 'text-green-600' }
+                if (v === 'false') return { txt: 'No',  cls: 'text-red-500' }
+                if (!v || v === 'null') return { txt: 'Sin asignar', cls: 'text-gray-400' }
+                return { txt: v, cls: 'text-gray-700' }
+              }
+              const ant = formatVal(a.valor_anterior)
+              const nvo = formatVal(a.valor_nuevo)
+              return (
+                <div key={a.id} className="px-5 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-sm">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="font-semibold text-gray-800">{a.usuario_nombre}</span>
+                    <span className="text-gray-400">·</span>
+                    <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-medium">
+                      {campoLabel[a.campo] ?? a.campo}
+                    </span>
+                    <span className={`text-xs font-medium line-through ${ant.cls}`}>{ant.txt}</span>
+                    <span className="text-gray-400">→</span>
+                    <span className={`text-xs font-semibold ${nvo.cls}`}>{nvo.txt}</span>
+                  </div>
+                  <span className="text-xs text-gray-400 whitespace-nowrap">
+                    {new Date(a.created_at).toLocaleString('es-CL')}
                   </span>
                 </div>
-                <span className="text-xs text-gray-400">
-                  {new Date(a.created_at).toLocaleString('es-CL')}
-                </span>
-              </div>
-            ))}
+              )
+            })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }
