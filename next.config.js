@@ -23,10 +23,8 @@ const securityHeaders = [
       `connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://*.supabase.co'} https://*.supabase.co wss://*.supabase.co`,
       // Estilos inline de Tailwind
       "style-src 'self' 'unsafe-inline'",
-      // Scripts: self + Next.js eval en dev
-      process.env.NODE_ENV === 'development'
-        ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
-        : "script-src 'self'",
+      // Scripts: Next.js requiere unsafe-inline para scripts de hidratación SSR
+      "script-src 'self' 'unsafe-inline'",
       "font-src 'self'",
       "img-src 'self' data: blob:",
       "frame-ancestors 'none'",
