@@ -12,7 +12,7 @@ export default async function DespachosListosPage({
   let query = (supabase as any)
     .from('ordenes_con_vencimiento')
     .select('*')
-    .not('fecha_despacho', 'is', null)
+    .gt('total_repuestos', 0)
     .order('fecha_despacho', { ascending: false })
     .limit(200)
 
@@ -22,7 +22,13 @@ export default async function DespachosListosPage({
     )
   }
 
-  const { data: ordenes } = await query
+  const { data: todas } = await query
+
+  // Despachados: todos los repuestos con despachado_ok O con fecha_despacho registrada
+  const ordenes = (todas ?? []).filter((o: any) =>
+    Number(o.repuestos_despachados) >= Number(o.total_repuestos) ||
+    o.fecha_despacho != null
+  )
 
   return (
     <div className="space-y-5">
