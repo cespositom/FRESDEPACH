@@ -30,7 +30,8 @@ export async function POST(req: NextRequest) {
 
   const { data: perfilData, error: perfilError } = await admin
     .from('perfiles')
-    .insert({ id: authData.user.id, nombre, email, perfil: rol, activo: true })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .insert({ id: authData.user.id, nombre, email, perfil: rol, activo: true } as any)
     .select()
     .single()
 
