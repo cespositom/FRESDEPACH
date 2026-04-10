@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
   }
 
-  let admin: ReturnType<typeof createClient>
+  let admin: any
   try {
     admin = makeAdmin()
   } catch (e: unknown) {
