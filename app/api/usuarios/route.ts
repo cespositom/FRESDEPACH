@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
   }
 
-  const admin = getSupabaseAdmin()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = getSupabaseAdmin() as any
 
   const { data: authData, error: authError } = await admin.auth.admin.createUser({
     email,
@@ -30,8 +31,7 @@ export async function POST(req: NextRequest) {
 
   const { data: perfilData, error: perfilError } = await admin
     .from('perfiles')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .insert({ id: authData.user.id, nombre, email, perfil: rol, activo: true } as any)
+    .insert({ id: authData.user.id, nombre, email, perfil: rol, activo: true })
     .select()
     .single()
 

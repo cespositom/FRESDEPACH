@@ -7,7 +7,9 @@ export default async function UsuariosPage() {
   const perfil = await getPerfil()
   if (perfil?.perfil !== 'admin') redirect('/dashboard')
 
-  const { data: usuarios } = await getSupabaseAdmin()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = getSupabaseAdmin() as any
+  const { data: usuarios } = await db
     .from('perfiles')
     .select('*')
     .order('created_at', { ascending: false })
