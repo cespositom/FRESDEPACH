@@ -1,4 +1,4 @@
-import { createServerSupabase } from '@/lib/server'
+import { getPerfil, createServerSupabase } from '@/lib/server'
 import Link from 'next/link'
 
 export default async function DespachosListosPage({
@@ -6,7 +6,8 @@ export default async function DespachosListosPage({
 }: {
   searchParams: Promise<{ q?: string }>
 }) {
-  const params  = await searchParams
+  const params   = await searchParams
+  const perfil   = await getPerfil()
   const supabase = await createServerSupabase()
 
   let query = (supabase as any)
@@ -15,6 +16,10 @@ export default async function DespachosListosPage({
     .gt('total_repuestos', 0)
     .order('fecha_despacho', { ascending: false })
     .limit(200)
+
+  if (perfil?.perfil === 'ejecutivo') {
+    query = query.eq('ejecutivo_id', perfil.id)
+  }
 
   if (params.q) {
     query = query.or(

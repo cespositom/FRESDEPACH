@@ -2,15 +2,21 @@ import { getPerfil, createServerSupabase } from '@/lib/server'
 import Link from 'next/link'
 
 export default async function DespachoPorComunaPage() {
-  await getPerfil()
+  const perfil = await getPerfil()
   const supabase = await createServerSupabase()
 
-  const { data: todas } = await (supabase as any)
+  let q = (supabase as any)
     .from('ordenes_con_vencimiento')
     .select('*')
     .gt('total_repuestos', 0)
     .neq('estado', 'Entregado')
     .order('dias_restantes', { ascending: true })
+
+  if (perfil?.perfil === 'ejecutivo') {
+    q = q.eq('ejecutivo_id', perfil.id)
+  }
+
+  const { data: todas } = await q
 
   // Listos para despacho: todos los repuestos marcados listo_despacho
   // pero NO todos marcados despachado_ok (esos van a Despachados)
