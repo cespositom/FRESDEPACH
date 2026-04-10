@@ -16,10 +16,11 @@ export async function PATCH(
   const { id } = await params
   const body = await req.json()
 
-  const { error } = await getSupabaseAdmin()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db = getSupabaseAdmin() as any
+  const { error } = await db
     .from('perfiles')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ activo: body.activo } as any)
+    .update({ activo: body.activo })
     .eq('id', id)
 
   if (error) {
