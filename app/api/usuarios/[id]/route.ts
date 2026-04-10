@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPerfil } from '@/lib/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
+
+export const dynamic = 'force-dynamic'
 
 export async function PATCH(
   req: NextRequest,
@@ -14,7 +16,7 @@ export async function PATCH(
   const { id } = await params
   const body = await req.json()
 
-  const { error } = await supabaseAdmin
+  const { error } = await getSupabaseAdmin()
     .from('perfiles')
     .update({ activo: body.activo })
     .eq('id', id)

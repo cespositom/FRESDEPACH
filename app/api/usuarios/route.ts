@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPerfil } from '@/lib/server'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
+
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   const perfil = await getPerfil()
@@ -14,8 +16,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 })
   }
 
-  // Crear usuario en auth
-  const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+  const admin = getSupabaseAdmin()
+
+  const { data: authData, error: authError } = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
@@ -25,16 +28,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: authError.message }, { status: 400 })
   }
 
-  // Insertar perfil
-  const { data: perfilData, error: perfilError } = await supabaseAdmin
+  const { data: perfilData, error: perfilError } = await admin
     .from('perfiles')
     .insert({ id: authData.user.id, nombre, email, perfil: rol, activo: true })
     .select()
     .single()
 
   if (perfilError) {
-    // Rollback: borrar usuario auth
-    await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
+    await admin.auth.admin.deleteUser(authData.user.id)
     return NextResponse.json({ error: perfilError.message }, { status: 400 })
   }
 
