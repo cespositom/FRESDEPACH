@@ -20,7 +20,7 @@ export default async function DespachoPorComunaPage() {
   const { data: talleres } = await (supabase as any)
     .from('talleres')
     .select('id, nombre, comuna, region, direccion')
-    .in('id', ordenIds.length > 0 ? [...new Set(ordenIds)] : [0])
+    .in('id', ordenIds.length > 0 ? Array.from(new Set(ordenIds)) : [0])
 
   const tallerMap: Record<number, any> = {}
   ;(talleres ?? []).forEach((t: any) => { tallerMap[t.id] = t })
