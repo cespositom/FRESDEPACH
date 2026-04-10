@@ -9,7 +9,15 @@ const SUPA_SERVICE = process.env.SUPABASE_SERVICE_ROLE_KEY!
 export const createBrowserSupabase = () =>
   createBrowserClient(SUPA_URL, SUPA_ANON)
 
-// Cliente admin con service_role (solo en server)
-export const supabaseAdmin = createClient(SUPA_URL, SUPA_SERVICE, {
-  auth: { autoRefreshToken: false, persistSession: false }
-})
+// Cliente admin con service_role (solo en server) - lazy para evitar error en build
+let _admin: ReturnType<typeof createClient> | null = null
+export function getSupabaseAdmin() {
+  if (!_admin) {
+    _admin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    )
+  }
+  return _admin
+}
