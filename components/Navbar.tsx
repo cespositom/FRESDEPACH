@@ -29,6 +29,7 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
     { href: '/dashboard',        label: 'Dashboard' },
     { href: '/repuestos',        label: 'Repuestos' },
     { href: '/despacho',         label: 'Despacho' },
+    { href: '/despachados',      label: 'Despachados' },
     { href: '/ordenes',          label: 'Órdenes' },
     ...(perfil.perfil === 'admin' ? [{ href: '/admin/usuarios', label: 'Usuarios' }] : []),
   ]

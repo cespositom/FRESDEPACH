@@ -10,6 +10,7 @@ export default async function DespachoPorComunaPage() {
     .select('*')
     .gt('total_repuestos', 0)
     .neq('estado', 'Entregado')
+    .is('fecha_despacho', null)
     .order('dias_restantes', { ascending: true })
 
   const ordenes = (todas ?? []).filter(
