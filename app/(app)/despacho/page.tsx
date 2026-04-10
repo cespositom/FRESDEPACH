@@ -10,11 +10,13 @@ export default async function DespachoPorComunaPage() {
     .select('*')
     .gt('total_repuestos', 0)
     .neq('estado', 'Entregado')
-    .is('fecha_despacho', null)
     .order('dias_restantes', { ascending: true })
 
-  const ordenes = (todas ?? []).filter(
-    (o: any) => Number(o.repuestos_listos) >= Number(o.total_repuestos)
+  // Listos para despacho: todos los repuestos marcados listo_despacho
+  // pero NO todos marcados despachado_ok (esos van a Despachados)
+  const ordenes = (todas ?? []).filter((o: any) =>
+    Number(o.repuestos_listos) >= Number(o.total_repuestos) &&
+    Number(o.repuestos_despachados) < Number(o.total_repuestos)
   )
 
   const tallerIds = Array.from(new Set(ordenes.map((o: any) => o.taller_id)))
