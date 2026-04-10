@@ -37,6 +37,12 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Variables de servidor inyectadas en runtime por Easypanel
+ARG SUPABASE_SERVICE_ROLE_KEY
+ARG ALLOWED_ORIGIN
+ENV SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
+ENV ALLOWED_ORIGIN=$ALLOWED_ORIGIN
+
 RUN addgroup --system --gid 1001 nodejs && \
     adduser  --system --uid  1001 nextjs
 
