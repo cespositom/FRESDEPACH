@@ -29,18 +29,30 @@ export default async function OrdenPage({ params }: { params: Promise<{ id: stri
     .eq('activo', true)
     .order('nombre')
 
-  // Auditoría de esta orden
-  const { data: auditoria } = await supabase
+  // Auditoría: cambios en repuestos + cambios en la orden misma
+  const repuestoIds = (repuestos ?? []).map((r: any) => String(r.id))
+
+  const { data: auditoriaRepuestos } = await (supabase as any)
     .from('auditoria')
     .select('*')
     .eq('tabla', 'repuestos_orden')
+    .in('registro_id', repuestoIds.length > 0 ? repuestoIds : ['0'])
+    .order('created_at', { ascending: false })
+    .limit(100)
+
+  const { data: auditoriaOrdenDirecta } = await (supabase as any)
+    .from('auditoria')
+    .select('*')
+    .eq('tabla', 'ordenes')
+    .eq('registro_id', id)
     .order('created_at', { ascending: false })
     .limit(50)
 
-  // Filtrar auditoría solo de repuestos de esta orden
-  const repuestoIds = (repuestos ?? []).map((r: any) => r.id)
-  const auditoriaOrden = (auditoria ?? []).filter((a: any) =>
-    repuestoIds.includes(a.registro_id) || a.registro_id === parseInt(id)
+  const auditoriaOrden = [
+    ...(auditoriaOrdenDirecta ?? []),
+    ...(auditoriaRepuestos ?? []),
+  ].sort((a: any, b: any) =>
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   )
 
   return (
