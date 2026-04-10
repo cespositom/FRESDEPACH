@@ -18,23 +18,25 @@ export default async function DashboardPage() {
   const perfil = await getPerfil()
   const supabase = await createServerSupabase()
 
+  const esEjecutivo = perfil?.perfil === 'ejecutivo'
+  const esAdminOrSup = perfil?.perfil === 'admin' || perfil?.perfil === 'supervisor'
+
   let query = (supabase as any)
     .from('ordenes_con_vencimiento')
     .select('*')
     .lte('dias_restantes', 30)
+    .is('fecha_despacho', null)
     .order('dias_restantes', { ascending: true })
     .limit(20)
 
-  if (perfil?.perfil === 'ejecutivo') {
-    query = query.eq('ejecutivo_id', perfil.id)
+  if (esEjecutivo) {
+    query = query.eq('ejecutivo_id', perfil!.id)
   }
 
   const { data: ordenes } = await query
 
-  const esEjecutivo = perfil?.perfil === 'ejecutivo'
-
   let qVencidas  = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).lt('dias_restantes', 0).is('fecha_despacho', null)
-  let qVencer2d  = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).gte('dias_restantes', 0).lte('dias_restantes', 2)
+  let qVencer2d  = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).gte('dias_restantes', 0).lte('dias_restantes', 2).is('fecha_despacho', null)
 
   // Repuestos pendientes: solo de órdenes asignadas al ejecutivo si corresponde
   let qPendientes = (supabase as any)
@@ -48,9 +50,47 @@ export default async function DashboardPage() {
     qPendientes = qPendientes.eq('orden.ejecutivo_id', perfil!.id)
   }
 
-  const { count: pendientes }  = await qPendientes
-  const { count: vencidas }    = await qVencidas
-  const { count: porVencer2d } = await qVencer2d
+  const [
+    { count: pendientes },
+    { count: vencidas },
+    { count: porVencer2d },
+  ] = await Promise.all([qPendientes, qVencidas, qVencer2d])
+
+  // ── Resumen por ejecutivo (solo admin/supervisor) ─────────────
+  let resumenEjecutivos: {
+    id: string; nombre: string
+    vencidas: number; por2d: number; pendientes: number; totalMes: number
+  }[] = []
+
+  if (esAdminOrSup) {
+    const startOfMonth = new Date()
+    startOfMonth.setDate(1)
+    startOfMonth.setHours(0, 0, 0, 0)
+
+    const [
+      { data: ejecutivos },
+      { data: todasOrdenes },
+      { data: ordenesMes },
+      { data: repsPendientes },
+    ] = await Promise.all([
+      (supabase as any).from('perfiles').select('id, nombre').eq('perfil', 'ejecutivo').order('nombre'),
+      (supabase as any).from('ordenes_con_vencimiento').select('ejecutivo_id, dias_restantes, fecha_despacho'),
+      (supabase as any).from('ordenes').select('ejecutivo_id').gte('created_at', startOfMonth.toISOString()),
+      (supabase as any).from('repuestos_orden').select('id, orden:ordenes!inner(ejecutivo_id)').eq('listo_despacho', false),
+    ])
+
+    resumenEjecutivos = (ejecutivos ?? []).map((ej: any) => {
+      const ords = (todasOrdenes ?? []).filter((o: any) => o.ejecutivo_id === ej.id)
+      return {
+        id:         ej.id,
+        nombre:     ej.nombre,
+        vencidas:   ords.filter((o: any) => o.dias_restantes < 0 && !o.fecha_despacho).length,
+        por2d:      ords.filter((o: any) => o.dias_restantes >= 0 && o.dias_restantes <= 2 && !o.fecha_despacho).length,
+        pendientes: (repsPendientes ?? []).filter((r: any) => r.orden?.ejecutivo_id === ej.id).length,
+        totalMes:   (ordenesMes ?? []).filter((o: any) => o.ejecutivo_id === ej.id).length,
+      }
+    })
+  }
 
   return (
     <div className="space-y-6">
@@ -74,6 +114,69 @@ export default async function DashboardPage() {
           <p className="text-3xl font-bold text-red-600 mt-1">{vencidas ?? 0}</p>
         </div>
       </div>
+
+      {/* Resumen por ejecutivo — solo admin/supervisor */}
+      {esAdminOrSup && resumenEjecutivos.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100">
+            <h2 className="font-semibold text-gray-900">Resumen por ejecutivo</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Mes actual · órdenes y repuestos por ejecutivo</p>
+          </div>
+
+          {/* Mobile: cards */}
+          <div className="md:hidden divide-y divide-gray-100">
+            {resumenEjecutivos.map(ej => (
+              <div key={ej.id} className="px-4 py-3 space-y-2">
+                <p className="font-medium text-gray-900 text-sm">{ej.nombre}</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                  <span className="text-gray-500">Vencen en 2d</span>
+                  <span className={`font-semibold ${ej.por2d > 0 ? 'text-orange-600' : 'text-gray-400'}`}>{ej.por2d}</span>
+                  <span className="text-gray-500">Vencidas</span>
+                  <span className={`font-semibold ${ej.vencidas > 0 ? 'text-red-600' : 'text-gray-400'}`}>{ej.vencidas}</span>
+                  <span className="text-gray-500">Rep. pendientes</span>
+                  <span className={`font-semibold ${ej.pendientes > 0 ? 'text-yellow-600' : 'text-gray-400'}`}>{ej.pendientes}</span>
+                  <span className="text-gray-500">Órdenes del mes</span>
+                  <span className="font-semibold text-gray-700">{ej.totalMes}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>
+                  <th className="px-4 py-3 text-center font-medium text-orange-500">Vencen en 2d</th>
+                  <th className="px-4 py-3 text-center font-medium text-red-500">Vencidas</th>
+                  <th className="px-4 py-3 text-center font-medium text-yellow-600">Rep. pendientes</th>
+                  <th className="px-4 py-3 text-center font-medium text-gray-500">Órdenes del mes</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {resumenEjecutivos.map(ej => (
+                  <tr key={ej.id} className="hover:bg-gray-50 transition">
+                    <td className="px-4 py-3 font-medium text-gray-900">{ej.nombre}</td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`font-semibold ${ej.por2d > 0 ? 'text-orange-600' : 'text-gray-300'}`}>{ej.por2d}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`font-semibold ${ej.vencidas > 0 ? 'text-red-600' : 'text-gray-300'}`}>{ej.vencidas}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`font-semibold ${ej.pendientes > 0 ? 'text-yellow-600' : 'text-gray-300'}`}>{ej.pendientes}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="font-semibold text-gray-700">{ej.totalMes}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Tabla próximas a vencer */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
