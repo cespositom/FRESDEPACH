@@ -33,7 +33,7 @@ export default async function DashboardPage() {
 
   const esEjecutivo = perfil?.perfil === 'ejecutivo'
 
-  let qVencidas  = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).lt('dias_restantes', 0)
+  let qVencidas  = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).lt('dias_restantes', 0).is('fecha_despacho', null)
   let qVencer2d  = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).gte('dias_restantes', 0).lte('dias_restantes', 2)
 
   // Repuestos pendientes: solo de órdenes asignadas al ejecutivo si corresponde
