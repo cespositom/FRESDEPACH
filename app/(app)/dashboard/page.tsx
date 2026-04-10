@@ -31,10 +31,22 @@ export default async function DashboardPage() {
 
   const { data: ordenes } = await query
 
-  const { count: totalOrdenes } = await (supabase as any).from('ordenes').select('*', { count: 'exact', head: true })
+  const esEjecutivo = perfil?.perfil === 'ejecutivo'
+
+  let qTotal     = (supabase as any).from('ordenes').select('*', { count: 'exact', head: true })
+  let qVencidas  = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).lt('dias_restantes', 0)
+  let qVencer2d  = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).gte('dias_restantes', 0).lte('dias_restantes', 2)
+
+  if (esEjecutivo) {
+    qTotal    = qTotal.eq('ejecutivo_id', perfil!.id)
+    qVencidas = qVencidas.eq('ejecutivo_id', perfil!.id)
+    qVencer2d = qVencer2d.eq('ejecutivo_id', perfil!.id)
+  }
+
+  const { count: totalOrdenes } = await qTotal
   const { count: pendientes }   = await (supabase as any).from('repuestos_orden').select('*', { count: 'exact', head: true }).eq('listo_despacho', false)
-  const { count: vencidas }     = await (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).lt('dias_restantes', 0)
-  const { count: porVencer2d }  = await (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).gte('dias_restantes', 0).lte('dias_restantes', 2)
+  const { count: vencidas }     = await qVencidas
+  const { count: porVencer2d }  = await qVencer2d
 
   return (
     <div className="space-y-6">
