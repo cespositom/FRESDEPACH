@@ -10,7 +10,7 @@ export default async function OrdenesPage({
   const perfil = await getPerfil()
   const supabase = await createServerSupabase()
 
-  let query = supabase
+  let query = (supabase as any)
     .from('ordenes_con_vencimiento')
     .select('*')
     .order('fecha', { ascending: false })
@@ -19,25 +19,25 @@ export default async function OrdenesPage({
     query = query.eq('ejecutivo_id', perfil.id)
   }
   if (params.q) {
-    query = query.or(`numero_orden.ilike.%${params.q}%,patente.ilike.%${params.q}%`)
+    query = query.or(
+      `numero_orden.ilike.%${params.q}%,patente.ilike.%${params.q}%,numero_siniestro.ilike.%${params.q}%`
+    )
   }
 
   const { data: ordenes } = await query.limit(100)
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Órdenes</h1>
-          <p className="text-gray-500 text-sm mt-1">{ordenes?.length ?? 0} órdenes encontradas</p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Órdenes</h1>
+        <p className="text-gray-500 text-sm mt-1">{ordenes?.length ?? 0} órdenes encontradas</p>
       </div>
 
       {/* Búsqueda */}
-      <form method="get" className="flex gap-3">
+      <form method="get" className="flex flex-wrap gap-2">
         <input name="q" defaultValue={params.q}
-          placeholder="Buscar por N° orden o patente..."
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="N° orden, siniestro o patente..."
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-[200px] max-w-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
           Buscar
@@ -56,12 +56,12 @@ export default async function OrdenesPage({
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
                 <th className="px-4 py-3 text-left font-medium text-gray-500">N° Orden</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Siniestro</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Fecha</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Aseguradora</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Vehículo</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Taller</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Total</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Estado</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Vencimiento</th>
                 <th className="px-4 py-3"></th>
@@ -74,29 +74,29 @@ export default async function OrdenesPage({
                 return (
                   <tr key={o.id} className="hover:bg-gray-50 transition">
                     <td className="px-4 py-3 font-medium">{o.numero_orden}</td>
-                    <td className="px-4 py-3 text-gray-500">{new Date(o.fecha).toLocaleDateString('es-CL')}</td>
-                    <td className="px-4 py-3 text-gray-600 max-w-[140px] truncate">{o.aseguradora_nombre}</td>
+                    <td className="px-4 py-3 text-gray-500 text-xs">{o.numero_siniestro ?? '—'}</td>
+                    <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{new Date(o.fecha).toLocaleDateString('es-CL')}</td>
+                    <td className="px-4 py-3 text-gray-600 max-w-[130px] truncate">{o.aseguradora_nombre}</td>
                     <td className="px-4 py-3">
                       <div className="font-medium">{o.patente}</div>
                       <div className="text-xs text-gray-400">{o.marca} {o.modelo}</div>
                     </td>
                     <td className="px-4 py-3 text-gray-600 max-w-[130px] truncate">{o.taller_nombre}</td>
-                    <td className="px-4 py-3 text-gray-600">{o.ejecutivo_nombre ?? <span className="text-gray-300">Sin asignar</span>}</td>
-                    <td className="px-4 py-3 text-gray-700">${o.total?.toLocaleString('es-CL')}</td>
+                    <td className="px-4 py-3 text-gray-600">{o.ejecutivo_nombre ?? <span className="text-gray-300">—</span>}</td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${
                         o.estado === 'Pendiente' ? 'bg-yellow-100 text-yellow-700' :
                         o.estado === 'Completado' ? 'bg-green-100 text-green-700' :
                         'bg-gray-100 text-gray-600'
                       }`}>{o.estado}</span>
                     </td>
-                    <td className={`px-4 py-3 text-xs ${vencColor}`}>
+                    <td className={`px-4 py-3 text-xs whitespace-nowrap ${vencColor}`}>
                       {o.fecha_vencimiento ? new Date(o.fecha_vencimiento).toLocaleDateString('es-CL') : '—'}
-                      {diasR < 999 && <div>{diasR < 0 ? `Vencida` : `${diasR}d`}</div>}
+                      {diasR < 999 && <div>{diasR < 0 ? 'Vencida' : `${diasR}d`}</div>}
                     </td>
                     <td className="px-4 py-3">
                       <Link href={`/ordenes/${o.id}`}
-                        className="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                        className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
                         Ver →
                       </Link>
                     </td>

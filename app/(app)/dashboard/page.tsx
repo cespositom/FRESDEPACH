@@ -18,8 +18,7 @@ export default async function DashboardPage() {
   const perfil = await getPerfil()
   const supabase = await createServerSupabase()
 
-  // Órdenes próximas a vencer (30 días) con repuestos pendientes
-  let query = supabase
+  let query = (supabase as any)
     .from('ordenes_con_vencimiento')
     .select('*')
     .lte('dias_restantes', 30)
@@ -32,10 +31,9 @@ export default async function DashboardPage() {
 
   const { data: ordenes } = await query
 
-  // Stats generales
-  const { count: totalOrdenes } = await supabase.from('ordenes').select('*', { count: 'exact', head: true })
-  const { count: pendientes } = await supabase.from('repuestos_orden').select('*', { count: 'exact', head: true }).eq('listo_despacho', false)
-  const { count: vencidas } = await supabase.from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).lt('dias_restantes', 0)
+  const { count: totalOrdenes } = await (supabase as any).from('ordenes').select('*', { count: 'exact', head: true })
+  const { count: pendientes }   = await (supabase as any).from('repuestos_orden').select('*', { count: 'exact', head: true }).eq('listo_despacho', false)
+  const { count: vencidas }     = await (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).lt('dias_restantes', 0)
 
   return (
     <div className="space-y-6">
@@ -45,7 +43,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <p className="text-sm text-gray-500">Total órdenes</p>
           <p className="text-3xl font-bold text-gray-900 mt-1">{totalOrdenes ?? 0}</p>
@@ -64,9 +62,34 @@ export default async function DashboardPage() {
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100">
           <h2 className="font-semibold text-gray-900">Órdenes próximas a vencer</h2>
-          <p className="text-xs text-gray-400 mt-0.5">Solo órdenes con repuestos pendientes de listo_despacho</p>
+          <p className="text-xs text-gray-400 mt-0.5">Próximos 30 días</p>
         </div>
-        <div className="overflow-x-auto">
+
+        {/* Mobile: cards */}
+        <div className="md:hidden divide-y divide-gray-100">
+          {(ordenes ?? []).map((o: any) => (
+            <div key={o.id} className="px-4 py-3 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-gray-900">{o.numero_orden}</span>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${badge(o.dias_restantes ?? 999)}`}>
+                  {label(o.dias_restantes ?? 999)}
+                </span>
+              </div>
+              <div className="text-xs text-gray-500">{o.patente} · {o.marca} {o.modelo}</div>
+              <div className="text-xs text-gray-400">{o.taller_nombre}</div>
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-xs text-gray-500">{o.repuestos_listos}/{o.total_repuestos} listos</span>
+                <Link href={`/ordenes/${o.id}`} className="text-blue-600 text-xs font-medium">Ver →</Link>
+              </div>
+            </div>
+          ))}
+          {(!ordenes || ordenes.length === 0) && (
+            <p className="px-4 py-8 text-center text-gray-400 text-sm">No hay órdenes próximas a vencer</p>
+          )}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
@@ -92,9 +115,7 @@ export default async function DashboardPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-600">{o.ejecutivo_nombre ?? <span className="text-gray-300">—</span>}</td>
                   <td className="px-4 py-3">
-                    <span className="text-xs">
-                      {o.repuestos_listos}/{o.total_repuestos} listos
-                    </span>
+                    <span className="text-xs">{o.repuestos_listos}/{o.total_repuestos} listos</span>
                     <div className="mt-1 w-24 bg-gray-200 rounded-full h-1.5">
                       <div className="bg-blue-500 h-1.5 rounded-full"
                         style={{ width: `${o.total_repuestos > 0 ? (o.repuestos_listos / o.total_repuestos * 100) : 0}%` }} />

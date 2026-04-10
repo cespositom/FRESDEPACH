@@ -4,6 +4,7 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Fresman - Seguros BCI',
   description: 'Gestión de órdenes de seguros',
+  robots: { index: false, follow: false },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
