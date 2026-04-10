@@ -36,7 +36,6 @@ export default function OrdenDetalle({
       .eq('id', rep.id)
 
     if (!error) {
-      // Registrar auditoría
       await supabase.from('auditoria').insert({
         tabla: 'repuestos_orden',
         registro_id: rep.id,
@@ -45,7 +44,14 @@ export default function OrdenDetalle({
         valor_nuevo: String(newVal),
         usuario_nombre: perfil.nombre,
       })
-      setLocalRep(prev => prev.map(r => r.id === rep.id ? { ...r, [field]: newVal } : r))
+      const updated = localRep.map(r => r.id === rep.id ? { ...r, [field]: newVal } : r)
+      setLocalRep(updated)
+
+      // Si todos los repuestos están despachados, marcar fecha_despacho en la orden
+      if (field === 'despachado_ok' && newVal && updated.every(r => r.despachado_ok)) {
+        await fetch(`/api/ordenes/${orden.id}/despacho`, { method: 'POST' })
+        router.refresh()
+      }
     }
     setLoading(null)
   }
