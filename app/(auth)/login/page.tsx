@@ -29,8 +29,7 @@ export default function LoginPage() {
         setError(`Error: ${error.message}`)
         setLoading(false)
       } else {
-        router.push('/dashboard')
-        router.refresh()
+        window.location.href = '/dashboard'
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Error desconocido'
