@@ -1,13 +1,13 @@
 import { getPerfil } from '@/lib/server'
 import { redirect } from 'next/navigation'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/supabase'
 import UsuariosCliente from './UsuariosCliente'
 
 export default async function UsuariosPage() {
   const perfil = await getPerfil()
   if (perfil?.perfil !== 'admin') redirect('/dashboard')
 
-  const { data: usuarios } = await supabaseAdmin
+  const { data: usuarios } = await getSupabaseAdmin()
     .from('perfiles')
     .select('*')
     .order('created_at', { ascending: false })
