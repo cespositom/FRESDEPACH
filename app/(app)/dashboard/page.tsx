@@ -97,7 +97,6 @@ export default async function DashboardPage() {
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Vehículo</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Repuestos</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Vencimiento</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Días</th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -121,9 +120,6 @@ export default async function DashboardPage() {
                         style={{ width: `${o.total_repuestos > 0 ? (o.repuestos_listos / o.total_repuestos * 100) : 0}%` }} />
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-600 text-xs">
-                    {o.fecha_vencimiento ? new Date(o.fecha_vencimiento).toLocaleDateString('es-CL') : '—'}
-                  </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${badge(o.dias_restantes ?? 999)}`}>
                       {label(o.dias_restantes ?? 999)}
@@ -139,7 +135,7 @@ export default async function DashboardPage() {
               ))}
               {(!ordenes || ordenes.length === 0) && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-sm">
+                  <td colSpan={6} className="px-4 py-8 text-center text-gray-400 text-sm">
                     No hay órdenes próximas a vencer
                   </td>
                 </tr>
