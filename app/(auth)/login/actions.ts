@@ -1,5 +1,4 @@
 'use server'
-import { redirect } from 'next/navigation'
 import { createServerSupabase } from '@/lib/server'
 
 export async function loginAction(formData: FormData) {
@@ -9,10 +8,6 @@ export async function loginAction(formData: FormData) {
   const supabase = await createServerSupabase()
   const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) {
-    const params = new URLSearchParams({ error: error.message })
-    redirect(`/login?${params}`)
-  }
-
-  redirect('/dashboard')
+  if (error) return { error: error.message }
+  return { success: true }
 }
