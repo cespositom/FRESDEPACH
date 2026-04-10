@@ -67,9 +67,6 @@ export default async function RepuestosPendientesPage() {
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Cant.</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">N° Orden</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Siniestro</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Vehículo</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Taller</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -85,12 +82,6 @@ export default async function RepuestosPendientesPage() {
                   <td className="px-4 py-3 font-medium text-gray-800">{r.orden.numero_orden}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{r.orden.numero_siniestro ?? '—'}</td>
                   <td className="px-4 py-3">
-                    <div className="font-medium">{r.orden.patente}</div>
-                    <div className="text-xs text-gray-400">{r.orden.marca} {r.orden.modelo}</div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600 max-w-[140px] truncate">{r.orden.taller_nombre}</td>
-                  <td className="px-4 py-3 text-gray-500">{r.orden.ejecutivo_nombre ?? <span className="text-gray-300">—</span>}</td>
-                  <td className="px-4 py-3">
                     <Link href={`/ordenes/${r.orden.id}`}
                       className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
                       Ver →
@@ -100,7 +91,7 @@ export default async function RepuestosPendientesPage() {
               ))}
               {lista.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={7} className="px-4 py-10 text-center text-gray-400">
                     No hay repuestos pendientes
                   </td>
                 </tr>
