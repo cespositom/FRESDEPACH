@@ -5,36 +5,29 @@ export default async function RepuestosPendientesPage() {
   const perfil = await getPerfil()
   const supabase = await createServerSupabase()
 
-  // Repuestos pendientes con info de orden y vencimiento
   const { data: repuestos } = await (supabase as any)
     .from('repuestos_orden')
     .select(`
-      id, nombre_repuesto, codigo_repuesto, cantidad, calidad, dias_despacho,
+      id, nombre_repuesto, codigo_repuesto, cantidad,
       orden:ordenes_con_vencimiento (
-        id, numero_orden, numero_siniestro, fecha_vencimiento, dias_restantes,
-        patente, marca, modelo, taller_nombre, ejecutivo_id, ejecutivo_nombre
+        id, numero_orden, numero_siniestro, dias_restantes,
+        ejecutivo_id
       )
     `)
     .eq('listo_despacho', false)
     .eq('despachado_ok', false)
     .order('id')
 
-  // Filtrar por ejecutivo si corresponde
   let lista = (repuestos ?? []).filter((r: any) => r.orden)
   if (perfil?.perfil === 'ejecutivo') {
     lista = lista.filter((r: any) => r.orden.ejecutivo_id === perfil.id)
   }
 
-  // Ordenar por dias_restantes ascendente (más urgente primero, vencidos primero)
-  lista.sort((a: any, b: any) => {
-    const da = a.orden.dias_restantes ?? 999
-    const db = b.orden.dias_restantes ?? 999
-    return da - db
-  })
+  lista.sort((a: any, b: any) => (a.orden.dias_restantes ?? 999) - (b.orden.dias_restantes ?? 999))
 
   function diasColor(dias: number | null) {
     if (dias === null) return 'text-gray-400'
-    if (dias < 0) return 'text-red-600 font-semibold'
+    if (dias < 0)  return 'text-red-600 font-semibold'
     if (dias <= 2) return 'text-orange-500 font-semibold'
     if (dias <= 5) return 'text-yellow-600'
     return 'text-green-600'
@@ -42,8 +35,8 @@ export default async function RepuestosPendientesPage() {
 
   function diasLabel(dias: number | null) {
     if (dias === null) return '—'
-    if (dias < 0) return `Vencida ${Math.abs(dias)}d`
-    if (dias === 0) return 'Vence hoy'
+    if (dias < 0)  return `Venc. ${Math.abs(dias)}d`
+    if (dias === 0) return 'Hoy'
     return `${dias}d`
   }
 
@@ -57,7 +50,31 @@ export default async function RepuestosPendientesPage() {
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
+
+        {/* Mobile: cards */}
+        <div className="md:hidden divide-y divide-gray-100">
+          {lista.map((r: any) => (
+            <div key={r.id} className="px-4 py-3 flex items-start justify-between gap-2">
+              <div className="space-y-0.5 min-w-0">
+                <p className="font-medium text-sm text-gray-900 truncate">{r.nombre_repuesto}</p>
+                <p className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'} · x{r.cantidad}</p>
+                <p className="text-xs text-gray-500">Orden {r.orden.numero_orden} · {r.orden.numero_siniestro ?? '—'}</p>
+              </div>
+              <div className="flex flex-col items-end gap-1 shrink-0">
+                <span className={`text-xs font-semibold ${diasColor(r.orden.dias_restantes)}`}>
+                  {diasLabel(r.orden.dias_restantes)}
+                </span>
+                <Link href={`/ordenes/${r.orden.id}`} className="text-blue-600 text-xs font-medium">Ver →</Link>
+              </div>
+            </div>
+          ))}
+          {lista.length === 0 && (
+            <p className="px-4 py-10 text-center text-gray-400 text-sm">No hay repuestos pendientes</p>
+          )}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">

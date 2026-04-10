@@ -5,7 +5,6 @@ export default async function DespachoPorComunaPage() {
   await getPerfil()
   const supabase = await createServerSupabase()
 
-  // Traer todas las órdenes con al menos 1 repuesto, no entregadas
   const { data: todas } = await (supabase as any)
     .from('ordenes_con_vencimiento')
     .select('*')
@@ -13,12 +12,10 @@ export default async function DespachoPorComunaPage() {
     .neq('estado', 'Entregado')
     .order('dias_restantes', { ascending: true })
 
-  // Filtrar en JS: solo las que tienen TODOS los repuestos listos para despacho
   const ordenes = (todas ?? []).filter(
     (o: any) => Number(o.repuestos_listos) >= Number(o.total_repuestos)
   )
 
-  // Obtener talleres con comuna para las órdenes encontradas
   const tallerIds = Array.from(new Set(ordenes.map((o: any) => o.taller_id)))
   const { data: talleres } = await (supabase as any)
     .from('talleres')
@@ -28,11 +25,10 @@ export default async function DespachoPorComunaPage() {
   const tallerMap: Record<number, any> = {}
   ;(talleres ?? []).forEach((t: any) => { tallerMap[t.id] = t })
 
-  // Agrupar por comuna
   const porComuna: Record<string, any[]> = {}
   ordenes.forEach((o: any) => {
-    const taller  = tallerMap[o.taller_id]
-    const comuna  = taller?.comuna ?? 'Sin comuna'
+    const taller = tallerMap[o.taller_id]
+    const comuna = taller?.comuna ?? 'Sin comuna'
     if (!porComuna[comuna]) porComuna[comuna] = []
     porComuna[comuna].push({ ...o, taller_comuna: comuna, taller_region: taller?.region, taller_direccion: taller?.direccion })
   })
@@ -49,7 +45,7 @@ export default async function DespachoPorComunaPage() {
 
   function diasLabel(dias: number | null) {
     if (dias === null) return '—'
-    if (dias < 0)  return `Vencida ${Math.abs(dias)}d`
+    if (dias < 0)  return `Venc. ${Math.abs(dias)}d`
     if (dias === 0) return 'Hoy'
     return `${dias}d`
   }
@@ -59,7 +55,7 @@ export default async function DespachoPorComunaPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Plan de despacho</h1>
         <p className="text-gray-500 text-sm mt-1">
-          {ordenes.length} {ordenes.length === 1 ? 'orden lista' : 'órdenes listas'} para despachar · agrupadas por comuna
+          {ordenes.length} {ordenes.length === 1 ? 'orden lista' : 'órdenes listas'} · agrupadas por comuna
         </p>
       </div>
 
@@ -74,6 +70,7 @@ export default async function DespachoPorComunaPage() {
         const region = ords[0]?.taller_region
         return (
           <div key={comuna} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            {/* Header comuna */}
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
               <div>
                 <h2 className="font-bold text-gray-900 text-base">{comuna}</h2>
@@ -84,7 +81,30 @@ export default async function DespachoPorComunaPage() {
               </span>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Mobile: cards */}
+            <div className="md:hidden divide-y divide-gray-100">
+              {ords.map((o: any) => (
+                <div key={o.id} className="px-4 py-3 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">{o.numero_orden}</span>
+                    <span className={`text-xs font-semibold ${diasColor(o.dias_restantes)}`}>
+                      {diasLabel(o.dias_restantes)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500">{o.patente} · {o.marca} {o.modelo}</p>
+                  <p className="text-xs text-gray-400 truncate">{o.taller_nombre} · {o.taller_direccion ?? ''}</p>
+                  <div className="flex items-center justify-between pt-0.5">
+                    <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                      {o.repuestos_listos}/{o.total_repuestos} listos
+                    </span>
+                    <Link href={`/ordenes/${o.id}`} className="text-blue-600 text-xs font-medium">Ver →</Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop: table */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">

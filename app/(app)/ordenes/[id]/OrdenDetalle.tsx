@@ -99,7 +99,7 @@ export default function OrdenDetalle({
       </div>
 
       {/* Info cards */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className={`grid gap-4 ${['admin','supervisor'].includes(perfil.perfil) ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
         <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-1">
           <p className="text-xs text-gray-400 uppercase tracking-wide">Vehículo</p>
           <p className="font-semibold">{orden.patente}</p>
@@ -110,11 +110,13 @@ export default function OrdenDetalle({
           <p className="font-semibold text-sm">{orden.taller_nombre}</p>
           <p className="text-xs text-gray-500">Siniestro: {orden.numero_siniestro}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-1">
-          <p className="text-xs text-gray-400 uppercase tracking-wide">Total</p>
-          <p className="font-semibold text-lg">${orden.total?.toLocaleString('es-CL')}</p>
-          <p className="text-xs text-gray-500">Liquidador: {orden.liquidador}</p>
-        </div>
+        {['admin', 'supervisor'].includes(perfil.perfil) && (
+          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-1">
+            <p className="text-xs text-gray-400 uppercase tracking-wide">Total</p>
+            <p className="font-semibold text-lg">${orden.total?.toLocaleString('es-CL')}</p>
+            <p className="text-xs text-gray-500">Liquidador: {orden.liquidador}</p>
+          </div>
+        )}
       </div>
 
       {/* Asignar ejecutivo */}
