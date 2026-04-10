@@ -18,7 +18,8 @@ export async function PATCH(
 
   const { error } = await getSupabaseAdmin()
     .from('perfiles')
-    .update({ activo: body.activo })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .update({ activo: body.activo } as any)
     .eq('id', id)
 
   if (error) {
