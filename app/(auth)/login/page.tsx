@@ -4,24 +4,38 @@ import { createBrowserSupabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [error, setError]       = useState('')
+  const [loading, setLoading]   = useState(false)
   const router = useRouter()
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const supabase = createBrowserSupabase()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) {
-      setError('Credenciales incorrectas')
+
+    // Verificar que las variables de entorno estén disponibles
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+      setError('Error de configuración: variables de entorno no disponibles. Contacte al administrador.')
       setLoading(false)
-    } else {
-      router.push('/dashboard')
-      router.refresh()
+      return
+    }
+
+    try {
+      const supabase = createBrowserSupabase()
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        setError(`Error: ${error.message}`)
+        setLoading(false)
+      } else {
+        router.push('/dashboard')
+        router.refresh()
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Error desconocido'
+      setError(`Error inesperado: ${msg}`)
+      setLoading(false)
     }
   }
 
