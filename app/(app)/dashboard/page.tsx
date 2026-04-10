@@ -33,20 +33,24 @@ export default async function DashboardPage() {
 
   const esEjecutivo = perfil?.perfil === 'ejecutivo'
 
-  let qTotal     = (supabase as any).from('ordenes').select('*', { count: 'exact', head: true })
   let qVencidas  = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).lt('dias_restantes', 0)
   let qVencer2d  = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).gte('dias_restantes', 0).lte('dias_restantes', 2)
 
+  // Repuestos pendientes: solo de órdenes asignadas al ejecutivo si corresponde
+  let qPendientes = (supabase as any)
+    .from('repuestos_orden')
+    .select('id, orden:ordenes!inner(ejecutivo_id)', { count: 'exact', head: true })
+    .eq('listo_despacho', false)
+
   if (esEjecutivo) {
-    qTotal    = qTotal.eq('ejecutivo_id', perfil!.id)
-    qVencidas = qVencidas.eq('ejecutivo_id', perfil!.id)
-    qVencer2d = qVencer2d.eq('ejecutivo_id', perfil!.id)
+    qVencidas   = qVencidas.eq('ejecutivo_id', perfil!.id)
+    qVencer2d   = qVencer2d.eq('ejecutivo_id', perfil!.id)
+    qPendientes = qPendientes.eq('orden.ejecutivo_id', perfil!.id)
   }
 
-  const { count: totalOrdenes } = await qTotal
-  const { count: pendientes }   = await (supabase as any).from('repuestos_orden').select('*', { count: 'exact', head: true }).eq('listo_despacho', false)
-  const { count: vencidas }     = await qVencidas
-  const { count: porVencer2d }  = await qVencer2d
+  const { count: pendientes }  = await qPendientes
+  const { count: vencidas }    = await qVencidas
+  const { count: porVencer2d } = await qVencer2d
 
   return (
     <div className="space-y-6">
@@ -56,11 +60,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Total órdenes</p>
-          <p className="text-3xl font-bold text-gray-900 mt-1">{totalOrdenes ?? 0}</p>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-orange-200 p-4">
           <p className="text-sm text-orange-600">Repuestos pendientes</p>
           <p className="text-3xl font-bold text-orange-600 mt-1">{pendientes ?? 0}</p>
