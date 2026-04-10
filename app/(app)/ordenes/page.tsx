@@ -26,6 +26,9 @@ export default async function OrdenesPage({
 
   const { data: ordenes } = await query.limit(100)
 
+  const esEjecutivo = perfil?.perfil === 'ejecutivo'
+  const colSpan = esEjecutivo ? 7 : 10
+
   return (
     <div className="space-y-5">
       <div>
@@ -60,10 +63,10 @@ export default async function OrdenesPage({
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Fecha</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Aseguradora</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Vehículo</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Taller</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>
+                {!esEjecutivo && <th className="px-4 py-3 text-left font-medium text-gray-500">Taller</th>}
+                {!esEjecutivo && <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>}
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Estado</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Vencimiento</th>
+                {!esEjecutivo && <th className="px-4 py-3 text-left font-medium text-gray-500">Vencimiento</th>}
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -81,8 +84,8 @@ export default async function OrdenesPage({
                       <div className="font-medium">{o.patente}</div>
                       <div className="text-xs text-gray-400">{o.marca} {o.modelo}</div>
                     </td>
-                    <td className="px-4 py-3 text-gray-600 max-w-[130px] truncate">{o.taller_nombre}</td>
-                    <td className="px-4 py-3 text-gray-600">{o.ejecutivo_nombre ?? <span className="text-gray-300">—</span>}</td>
+                    {!esEjecutivo && <td className="px-4 py-3 text-gray-600 max-w-[130px] truncate">{o.taller_nombre}</td>}
+                    {!esEjecutivo && <td className="px-4 py-3 text-gray-600">{o.ejecutivo_nombre ?? <span className="text-gray-300">—</span>}</td>}
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${
                         o.estado === 'Pendiente' ? 'bg-yellow-100 text-yellow-700' :
@@ -90,10 +93,12 @@ export default async function OrdenesPage({
                         'bg-gray-100 text-gray-600'
                       }`}>{o.estado}</span>
                     </td>
-                    <td className={`px-4 py-3 text-xs whitespace-nowrap ${vencColor}`}>
-                      {o.fecha_vencimiento ? new Date(o.fecha_vencimiento).toLocaleDateString('es-CL') : '—'}
-                      {diasR < 999 && <div>{diasR < 0 ? 'Vencida' : `${diasR}d`}</div>}
-                    </td>
+                    {!esEjecutivo && (
+                      <td className={`px-4 py-3 text-xs whitespace-nowrap ${vencColor}`}>
+                        {o.fecha_vencimiento ? new Date(o.fecha_vencimiento).toLocaleDateString('es-CL') : '—'}
+                        {diasR < 999 && <div>{diasR < 0 ? 'Vencida' : `${diasR}d`}</div>}
+                      </td>
+                    )}
                     <td className="px-4 py-3">
                       <Link href={`/ordenes/${o.id}`}
                         className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
@@ -105,7 +110,7 @@ export default async function OrdenesPage({
               })}
               {(!ordenes || ordenes.length === 0) && (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={colSpan} className="px-4 py-8 text-center text-gray-400">
                     No hay órdenes
                   </td>
                 </tr>

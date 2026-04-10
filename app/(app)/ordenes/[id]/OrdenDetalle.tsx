@@ -91,7 +91,7 @@ export default function OrdenDetalle({
           <h1 className="text-2xl font-bold text-gray-900">Orden {orden.numero_orden}</h1>
           <p className="text-gray-500 text-sm mt-1">
             {orden.aseguradora_nombre} · {new Date(orden.fecha).toLocaleDateString('es-CL')}
-            {orden.fecha_vencimiento && (
+            {perfil.perfil !== 'ejecutivo' && orden.fecha_vencimiento && (
               <span className={`ml-2 font-medium ${orden.dias_restantes < 0 ? 'text-red-600' : orden.dias_restantes <= 3 ? 'text-orange-500' : 'text-gray-600'}`}>
                 · Vence {new Date(orden.fecha_vencimiento).toLocaleDateString('es-CL')}
                 {orden.dias_restantes < 0 ? ` (vencida ${Math.abs(orden.dias_restantes)}d)` : ` (${orden.dias_restantes}d)`}
@@ -105,17 +105,22 @@ export default function OrdenDetalle({
       </div>
 
       {/* Info cards */}
-      <div className={`grid gap-4 ${['admin','supervisor'].includes(perfil.perfil) ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
+      <div className={`grid gap-4 ${['admin','supervisor'].includes(perfil.perfil) ? 'grid-cols-1 sm:grid-cols-3' : perfil.perfil === 'ejecutivo' ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2'}`}>
         <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-1">
           <p className="text-xs text-gray-400 uppercase tracking-wide">Vehículo</p>
           <p className="font-semibold">{orden.patente}</p>
           <p className="text-sm text-gray-600">{orden.marca} {orden.modelo} {orden.anio}</p>
+          {perfil.perfil === 'ejecutivo' && (
+            <p className="text-xs text-gray-500 pt-1">Siniestro: {orden.numero_siniestro}</p>
+          )}
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-1">
-          <p className="text-xs text-gray-400 uppercase tracking-wide">Taller</p>
-          <p className="font-semibold text-sm">{orden.taller_nombre}</p>
-          <p className="text-xs text-gray-500">Siniestro: {orden.numero_siniestro}</p>
-        </div>
+        {perfil.perfil !== 'ejecutivo' && (
+          <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-1">
+            <p className="text-xs text-gray-400 uppercase tracking-wide">Taller</p>
+            <p className="font-semibold text-sm">{orden.taller_nombre}</p>
+            <p className="text-xs text-gray-500">Siniestro: {orden.numero_siniestro}</p>
+          </div>
+        )}
         {['admin', 'supervisor'].includes(perfil.perfil) && (
           <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-1">
             <p className="text-xs text-gray-400 uppercase tracking-wide">Total</p>

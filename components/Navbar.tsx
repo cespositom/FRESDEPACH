@@ -47,7 +47,7 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
           <div className="hidden md:flex gap-1">
             {links.map(l => (
               <Link key={l.href} href={l.href}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition uppercase tracking-wide ${
                   pathname.startsWith(l.href)
                     ? 'bg-blue-50 text-blue-600'
                     : 'text-gray-600 hover:bg-gray-100'
@@ -97,7 +97,7 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
           {links.map(l => (
             <Link key={l.href} href={l.href}
               onClick={() => setOpen(false)}
-              className={`block px-3 py-2 rounded-lg text-sm font-medium transition ${
+              className={`block px-3 py-2 rounded-lg text-sm font-medium transition uppercase tracking-wide ${
                 pathname.startsWith(l.href)
                   ? 'bg-blue-50 text-blue-600'
                   : 'text-gray-600 hover:bg-gray-100'
