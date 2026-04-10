@@ -22,11 +22,10 @@ export default async function OrdenPage({ params }: { params: Promise<{ id: stri
     .eq('orden_id', id)
     .order('id')
 
-  // Ejecutivos disponibles (para asignar)
+  // Ejecutivos disponibles (para asignar) - todos los usuarios activos
   const { data: ejecutivos } = await supabase
     .from('perfiles')
     .select('id, nombre, email')
-    .in('perfil', ['ejecutivo', 'supervisor'])
     .eq('activo', true)
     .order('nombre')
 
