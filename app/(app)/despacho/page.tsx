@@ -2,7 +2,8 @@ import { getPerfil, createServerSupabase } from '@/lib/server'
 import Link from 'next/link'
 
 export default async function DespachoPorComunaPage() {
-  const perfil = await getPerfil()
+  const perfil   = await getPerfil()
+  const esEjec   = perfil?.perfil === 'ejecutivo'
   const supabase = await createServerSupabase()
 
   let q = (supabase as any)
@@ -101,7 +102,7 @@ export default async function DespachoPorComunaPage() {
                     </span>
                   </div>
                   <p className="text-xs text-gray-500">{o.patente} · {o.marca} {o.modelo}</p>
-                  <p className="text-xs text-gray-400 truncate">{o.taller_nombre} · {o.taller_direccion ?? ''}</p>
+                  {!esEjec && <p className="text-xs text-gray-400 truncate">{o.taller_nombre} · {o.taller_direccion ?? ''}</p>}
                   <div className="flex items-center justify-between pt-0.5">
                     <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">
                       {o.repuestos_listos}/{o.total_repuestos} listos
@@ -121,8 +122,8 @@ export default async function DespachoPorComunaPage() {
                     <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">N° Orden</th>
                     <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Siniestro</th>
                     <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Vehículo</th>
-                    <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Taller</th>
-                    <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Dirección</th>
+                    {!esEjec && <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Taller</th>}
+                    {!esEjec && <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Dirección</th>}
                     <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Repuestos</th>
                     <th className="px-4 py-2.5"></th>
                   </tr>
@@ -139,8 +140,8 @@ export default async function DespachoPorComunaPage() {
                         <div className="font-medium">{o.patente}</div>
                         <div className="text-xs text-gray-400">{o.marca} {o.modelo}</div>
                       </td>
-                      <td className="px-4 py-3 text-gray-600 max-w-[150px] truncate">{o.taller_nombre}</td>
-                      <td className="px-4 py-3 text-gray-500 text-xs max-w-[150px] truncate">{o.taller_direccion ?? '—'}</td>
+                      {!esEjec && <td className="px-4 py-3 text-gray-600 max-w-[150px] truncate">{o.taller_nombre}</td>}
+                      {!esEjec && <td className="px-4 py-3 text-gray-500 text-xs max-w-[150px] truncate">{o.taller_direccion ?? '—'}</td>}
                       <td className="px-4 py-3">
                         <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">
                           {o.repuestos_listos}/{o.total_repuestos} listos
