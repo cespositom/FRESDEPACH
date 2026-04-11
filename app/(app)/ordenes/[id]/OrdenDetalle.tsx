@@ -14,6 +14,7 @@ type Perfil = { id: string; nombre: string; perfil: string }
 const CAN_LISTO = ['admin', 'supervisor', 'ejecutivo']
 const CAN_DESPACHADO = ['admin', 'logistica']
 const CAN_ASIGNAR = ['admin', 'supervisor']
+const CAN_GUIA = ['admin', 'supervisor']
 
 export default function OrdenDetalle({
   orden, repuestos, ejecutivos, auditoria, perfil
@@ -26,6 +27,9 @@ export default function OrdenDetalle({
   const [ejLoading, setEjLoading] = useState(false)
   const [ejecutivoId, setEjecutivoId] = useState(orden.ejecutivo_id ?? '')
   const [localRep, setLocalRep] = useState<Repuesto[]>(repuestos)
+  const [guia, setGuia] = useState<string>(orden.guia ?? '')
+  const [guiaLoading, setGuiaLoading] = useState(false)
+  const [accionLoading, setAccionLoading] = useState<'anular' | 'eliminar' | null>(null)
 
   async function toggleField(rep: Repuesto, field: 'listo_despacho' | 'despachado_ok') {
     setLoading(rep.id)
@@ -56,6 +60,39 @@ export default function OrdenDetalle({
     setLoading(null)
   }
 
+  async function guardarGuia() {
+    setGuiaLoading(true)
+    const { error } = await supabase.from('ordenes').update({ guia }).eq('id', orden.id)
+    if (!error) {
+      await supabase.from('auditoria').insert({
+        tabla: 'ordenes',
+        registro_id: orden.id,
+        campo: 'guia',
+        valor_anterior: orden.guia ?? '',
+        valor_nuevo: guia,
+        usuario_nombre: perfil.nombre,
+      })
+      router.refresh()
+    }
+    setGuiaLoading(false)
+  }
+
+  async function anularOrden() {
+    if (!confirm('¿Confirma que desea anular esta orden?')) return
+    setAccionLoading('anular')
+    await fetch(`/api/ordenes/${orden.id}/anular`, { method: 'POST' })
+    setAccionLoading(null)
+    router.refresh()
+  }
+
+  async function eliminarOrden() {
+    if (!confirm('¿Confirma que desea ELIMINAR esta orden? Esta acción no se puede deshacer.')) return
+    setAccionLoading('eliminar')
+    await fetch(`/api/ordenes/${orden.id}/eliminar`, { method: 'DELETE' })
+    setAccionLoading(null)
+    router.push('/ordenes')
+  }
+
   async function asignarEjecutivo() {
     setEjLoading(true)
     const ejAnterior = orden.ejecutivo_nombre ?? 'Sin asignar'
@@ -79,6 +116,8 @@ export default function OrdenDetalle({
   const canListo    = CAN_LISTO.includes(perfil.perfil)
   const canDespacho = CAN_DESPACHADO.includes(perfil.perfil)
   const canAsignar  = CAN_ASIGNAR.includes(perfil.perfil)
+  const canGuia     = CAN_GUIA.includes(perfil.perfil)
+  const esAdmin     = perfil.perfil === 'admin'
 
   const listos    = localRep.filter(r => r.listo_despacho).length
   const despachados = localRep.filter(r => r.despachado_ok).length
@@ -99,9 +138,33 @@ export default function OrdenDetalle({
             )}
           </p>
         </div>
-        <span className={`text-sm font-medium px-3 py-1 rounded-full ${orden.estado === 'Pendiente' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
-          {orden.estado}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className={`text-sm font-medium px-3 py-1 rounded-full ${
+            orden.estado === 'Pendiente'  ? 'bg-yellow-100 text-yellow-700' :
+            orden.estado === 'Anulada'    ? 'bg-red-100 text-red-700' :
+            'bg-green-100 text-green-700'
+          }`}>
+            {orden.estado}
+          </span>
+          {esAdmin && orden.estado !== 'Anulada' && (
+            <button
+              onClick={anularOrden}
+              disabled={accionLoading !== null}
+              className="text-xs px-3 py-1 rounded-full border border-orange-300 text-orange-600 hover:bg-orange-50 disabled:opacity-50"
+            >
+              {accionLoading === 'anular' ? '...' : 'Anular'}
+            </button>
+          )}
+          {esAdmin && (
+            <button
+              onClick={eliminarOrden}
+              disabled={accionLoading !== null}
+              className="text-xs px-3 py-1 rounded-full border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-50"
+            >
+              {accionLoading === 'eliminar' ? '...' : 'Eliminar'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Info cards */}
@@ -150,6 +213,36 @@ export default function OrdenDetalle({
           >
             {ejLoading ? 'Guardando...' : 'Guardar'}
           </button>
+        </div>
+      )}
+
+      {/* Guía de despacho */}
+      {perfil.perfil !== 'ejecutivo' && (
+        <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-end gap-3">
+          <div className="flex-1">
+            <label className="text-sm font-medium text-gray-700 block mb-1">Guía de despacho</label>
+            {canGuia ? (
+              <input
+                type="text"
+                value={guia}
+                onChange={e => setGuia(e.target.value)}
+                placeholder="N° de guía..."
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            ) : (
+              <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-lg border border-gray-200">
+                {orden.guia ?? <span className="text-gray-400">Sin guía registrada</span>}
+              </p>
+            )}
+          </div>
+          {canGuia && (
+            <button
+              onClick={guardarGuia} disabled={guiaLoading}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+            >
+              {guiaLoading ? 'Guardando...' : 'Guardar'}
+            </button>
+          )}
         </div>
       )}
 
@@ -252,6 +345,7 @@ export default function OrdenDetalle({
                 despachado_ok:  'Despachado OK',
                 ejecutivo_id:   'Ejecutivo asignado',
                 estado:         'Estado',
+                guia:           'Guía de despacho',
               }
               const formatVal = (v: string) => {
                 if (v === 'true')  return { txt: 'Sí',  cls: 'text-green-600' }
