@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
   const json = await res.json().catch(() => ({}))
 
   if (!res.ok) {
-    return NextResponse.json({ error: json.message ?? 'Error en n8n' }, { status: res.status })
+    const mensaje = json.mensaje ?? json.message ?? 'Error al procesar la orden'
+    return NextResponse.json({ error: mensaje }, { status: res.status })
   }
 
   return NextResponse.json(json)
