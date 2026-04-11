@@ -35,8 +35,9 @@ export default async function DashboardPage() {
 
   const { data: ordenes } = await query
 
-  let qVencidas  = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).lt('dias_restantes', 0).is('fecha_despacho', null)
-  let qVencer2d  = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).gte('dias_restantes', 0).lte('dias_restantes', 2).is('fecha_despacho', null)
+  let qVencidas    = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).lt('dias_restantes', 0).is('fecha_despacho', null)
+  let qVencer2d    = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).gte('dias_restantes', 0).lte('dias_restantes', 2).is('fecha_despacho', null)
+  let qSinDespacho = (supabase as any).from('repuestos_orden').select('id, orden:ordenes!inner(estado)', { count: 'exact', head: true }).eq('despachado_ok', false).neq('orden.estado', 'Anulada')
 
   // Repuestos pendientes: solo de órdenes asignadas al ejecutivo si corresponde
   let qPendientes = (supabase as any)
@@ -45,16 +46,18 @@ export default async function DashboardPage() {
     .eq('listo_despacho', false)
 
   if (esEjecutivo) {
-    qVencidas   = qVencidas.eq('ejecutivo_id', perfil!.id)
-    qVencer2d   = qVencer2d.eq('ejecutivo_id', perfil!.id)
-    qPendientes = qPendientes.eq('orden.ejecutivo_id', perfil!.id)
+    qVencidas    = qVencidas.eq('ejecutivo_id', perfil!.id)
+    qVencer2d    = qVencer2d.eq('ejecutivo_id', perfil!.id)
+    qPendientes  = qPendientes.eq('orden.ejecutivo_id', perfil!.id)
+    qSinDespacho = qSinDespacho.eq('orden.ejecutivo_id', perfil!.id)
   }
 
   const [
     { count: pendientes },
     { count: vencidas },
     { count: porVencer2d },
-  ] = await Promise.all([qPendientes, qVencidas, qVencer2d])
+    { count: sinDespacho },
+  ] = await Promise.all([qPendientes, qVencidas, qVencer2d, qSinDespacho])
 
   // ── Resumen por ejecutivo (solo admin/supervisor) ─────────────
   let resumenEjecutivos: {
@@ -100,10 +103,14 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl border border-orange-200 p-4">
           <p className="text-sm text-orange-600">Repuestos pendientes</p>
           <p className="text-3xl font-bold text-orange-600 mt-1">{pendientes ?? 0}</p>
+        </div>
+        <div className="bg-white rounded-xl border border-blue-200 p-4">
+          <p className="text-sm text-blue-600">Sin despacho OK</p>
+          <p className="text-3xl font-bold text-blue-600 mt-1">{sinDespacho ?? 0}</p>
         </div>
         <div className="bg-white rounded-xl border border-yellow-200 p-4">
           <p className="text-sm text-yellow-600">Vencen en 2 días</p>
