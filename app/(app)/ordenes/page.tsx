@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 export default async function OrdenesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; estado?: string }>
+  searchParams: Promise<{ q?: string; estado?: string; guia?: string }>
 }) {
   const params = await searchParams
   const perfil = await getPerfil()
@@ -24,6 +24,9 @@ export default async function OrdenesPage({
     query = query.or(
       `numero_orden.ilike.%${params.q}%,patente.ilike.%${params.q}%,numero_siniestro.ilike.%${params.q}%`
     )
+  }
+  if (params.guia) {
+    query = query.ilike('guia', `%${params.guia}%`)
   }
 
   const { data: ordenes } = await query.limit(100)
@@ -44,10 +47,14 @@ export default async function OrdenesPage({
           placeholder="N° orden, siniestro o patente..."
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-[200px] max-w-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        <input name="guia" defaultValue={params.guia}
+          placeholder="N° guía..."
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm w-40 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
         <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
           Buscar
         </button>
-        {params.q && (
+        {(params.q || params.guia) && (
           <Link href="/ordenes" className="px-4 py-2 rounded-lg text-sm border border-gray-300 hover:bg-gray-50">
             Limpiar
           </Link>
