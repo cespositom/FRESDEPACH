@@ -49,7 +49,7 @@ export default async function DespachoPorComunaPage() {
     if (dias === null) return 'text-gray-400'
     if (dias < 0)  return 'text-red-600 font-semibold'
     if (dias <= 2) return 'text-orange-500 font-semibold'
-    if (dias <= 5) return 'text-yellow-600'
+    if (dias <= 4) return 'text-yellow-600'
     return 'text-green-600'
   }
 

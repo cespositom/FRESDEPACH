@@ -4,7 +4,7 @@ import Link from 'next/link'
 function badge(dias: number) {
   if (dias < 0)  return 'bg-red-100 text-red-700 border border-red-200'
   if (dias <= 2) return 'bg-orange-100 text-orange-700 border border-orange-200'
-  if (dias <= 5) return 'bg-yellow-100 text-yellow-700 border border-yellow-200'
+  if (dias <= 4) return 'bg-yellow-100 text-yellow-700 border border-yellow-200'
   return 'bg-green-100 text-green-700 border border-green-200'
 }
 
