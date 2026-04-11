@@ -39,18 +39,18 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
       <div className="px-4 sm:px-6 py-3 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="font-bold text-blue-600 text-lg shrink-0">
-            Fresman
+          <Link href="/dashboard" className="font-bold text-blue-600 text-lg shrink-0 tracking-wide">
+            FRESMAN
           </Link>
 
           {/* Links desktop */}
           <div className="hidden md:flex gap-1">
             {links.map(l => (
               <Link key={l.href} href={l.href}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition uppercase tracking-wide ${
+                className={`px-3 py-1.5 rounded-lg text-sm transition uppercase tracking-wide ${
                   pathname.startsWith(l.href)
-                    ? 'bg-blue-50 text-blue-600'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? 'bg-blue-50 text-blue-600 font-bold'
+                    : 'text-gray-600 font-medium hover:bg-gray-100'
                 }`}>
                 {l.label}
               </Link>
@@ -97,10 +97,10 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
           {links.map(l => (
             <Link key={l.href} href={l.href}
               onClick={() => setOpen(false)}
-              className={`block px-3 py-2 rounded-lg text-sm font-medium transition uppercase tracking-wide ${
+              className={`block px-3 py-2 rounded-lg text-sm transition uppercase tracking-wide ${
                 pathname.startsWith(l.href)
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-gray-600 hover:bg-gray-100'
+                  ? 'bg-blue-50 text-blue-600 font-bold'
+                  : 'text-gray-600 font-medium hover:bg-gray-100'
               }`}>
               {l.label}
             </Link>

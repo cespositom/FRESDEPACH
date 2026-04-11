@@ -8,6 +8,7 @@ export default async function DespachosListosPage({
 }) {
   const params   = await searchParams
   const perfil   = await getPerfil()
+  const esEjec   = perfil?.perfil === 'ejecutivo'
   const supabase = await createServerSupabase()
 
   let query = (supabase as any)
@@ -72,7 +73,7 @@ export default async function DespachosListosPage({
               </div>
               <p className="text-xs text-gray-500">Siniestro: {o.numero_siniestro ?? '—'}</p>
               <p className="text-xs text-gray-500">{o.patente} · {o.marca} {o.modelo}</p>
-              <p className="text-xs text-gray-400 truncate">{o.taller_nombre}</p>
+              {!esEjec && <p className="text-xs text-gray-400 truncate">{o.taller_nombre}</p>}
               <Link href={`/ordenes/${o.id}`} className="text-blue-600 text-xs font-medium">Ver orden →</Link>
             </div>
           ))}
@@ -91,8 +92,8 @@ export default async function DespachosListosPage({
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Siniestro</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Vehículo</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Aseguradora</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Taller</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>
+                {!esEjec && <th className="px-4 py-3 text-left font-medium text-gray-500">Taller</th>}
+                {!esEjec && <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>}
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -111,8 +112,8 @@ export default async function DespachosListosPage({
                     <div className="text-xs text-gray-400">{o.marca} {o.modelo}</div>
                   </td>
                   <td className="px-4 py-3 text-gray-600 max-w-[130px] truncate">{o.aseguradora_nombre}</td>
-                  <td className="px-4 py-3 text-gray-600 max-w-[130px] truncate">{o.taller_nombre}</td>
-                  <td className="px-4 py-3 text-gray-500">{o.ejecutivo_nombre ?? <span className="text-gray-300">—</span>}</td>
+                  {!esEjec && <td className="px-4 py-3 text-gray-600 max-w-[130px] truncate">{o.taller_nombre}</td>}
+                  {!esEjec && <td className="px-4 py-3 text-gray-500">{o.ejecutivo_nombre ?? <span className="text-gray-300">—</span>}</td>}
                   <td className="px-4 py-3">
                     <Link href={`/ordenes/${o.id}`}
                       className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
@@ -123,7 +124,7 @@ export default async function DespachosListosPage({
               ))}
               {(!ordenes || ordenes.length === 0) && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={esEjec ? 6 : 8} className="px-4 py-10 text-center text-gray-400">
                     No hay despachos registrados
                   </td>
                 </tr>
