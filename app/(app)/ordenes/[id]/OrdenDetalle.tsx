@@ -3,6 +3,12 @@ import { useState } from 'react'
 import { createBrowserSupabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 
+// Formatea fecha YYYY-MM-DD sin desfase de timezone
+function fmtFecha(fecha: string) {
+  const [y, m, d] = fecha.substring(0, 10).split('-')
+  return `${d}/${m}/${y}`
+}
+
 type Repuesto = {
   id: number; nombre_repuesto: string; codigo_repuesto: string | null
   calidad: string; cantidad: number; dias_despacho: number | null
@@ -149,10 +155,10 @@ export default function OrdenDetalle({
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Orden {orden.numero_orden}</h1>
           <p className="text-gray-500 text-sm mt-1">
-            {orden.aseguradora_nombre} · {new Date(orden.fecha).toLocaleDateString('es-CL')}
+            {orden.aseguradora_nombre} · {fmtFecha(orden.fecha)}
             {perfil.perfil !== 'ejecutivo' && orden.fecha_vencimiento && (
               <span className={`ml-2 font-medium ${orden.dias_restantes < 0 ? 'text-red-600' : orden.dias_restantes <= 3 ? 'text-orange-500' : 'text-gray-600'}`}>
-                · Vence {new Date(orden.fecha_vencimiento).toLocaleDateString('es-CL')}
+                · Vence {fmtFecha(orden.fecha_vencimiento)}
                 {orden.dias_restantes < 0 ? ` (vencida ${Math.abs(orden.dias_restantes)}d)` : ` (${orden.dias_restantes}d)`}
               </span>
             )}
