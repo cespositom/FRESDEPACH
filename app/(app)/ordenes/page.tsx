@@ -1,5 +1,6 @@
 import { getPerfil, createServerSupabase } from '@/lib/server'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 export default async function OrdenesPage({
   searchParams,
@@ -8,6 +9,7 @@ export default async function OrdenesPage({
 }) {
   const params = await searchParams
   const perfil = await getPerfil()
+  if (perfil?.perfil === 'logistica') redirect('/dashboard')
   const supabase = await createServerSupabase()
 
   let query = (supabase as any)
