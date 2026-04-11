@@ -29,6 +29,8 @@ export default function OrdenDetalle({
   const [localRep, setLocalRep] = useState<Repuesto[]>(repuestos)
   const [guia, setGuia] = useState<string>(orden.guia ?? '')
   const [guiaLoading, setGuiaLoading] = useState(false)
+  const [observaciones, setObservaciones] = useState<string>(orden.observaciones ?? '')
+  const [obsLoading, setObsLoading] = useState(false)
   const [accionLoading, setAccionLoading] = useState<'anular' | 'eliminar' | null>(null)
 
   async function toggleField(rep: Repuesto, field: 'listo_despacho' | 'despachado_ok') {
@@ -77,6 +79,23 @@ export default function OrdenDetalle({
     setGuiaLoading(false)
   }
 
+  async function guardarObservaciones() {
+    setObsLoading(true)
+    const { error } = await supabase.from('ordenes').update({ observaciones }).eq('id', orden.id)
+    if (!error) {
+      await supabase.from('auditoria').insert({
+        tabla: 'ordenes',
+        registro_id: orden.id,
+        campo: 'observaciones',
+        valor_anterior: orden.observaciones ?? '',
+        valor_nuevo: observaciones,
+        usuario_nombre: perfil.nombre,
+      })
+      router.refresh()
+    }
+    setObsLoading(false)
+  }
+
   async function anularOrden() {
     if (!confirm('¿Confirma que desea anular esta orden?')) return
     setAccionLoading('anular')
@@ -117,6 +136,7 @@ export default function OrdenDetalle({
   const canDespacho = CAN_DESPACHADO.includes(perfil.perfil)
   const canAsignar  = CAN_ASIGNAR.includes(perfil.perfil)
   const canGuia     = CAN_GUIA.includes(perfil.perfil)
+  const canObs      = ['admin', 'supervisor'].includes(perfil.perfil)
   const esAdmin     = perfil.perfil === 'admin'
 
   const listos    = localRep.filter(r => r.listo_despacho).length
@@ -246,6 +266,34 @@ export default function OrdenDetalle({
         </div>
       )}
 
+      {/* Observaciones */}
+      <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
+        <label className="text-sm font-medium text-gray-700 block">Observaciones</label>
+        {canObs ? (
+          <div className="flex flex-col gap-2">
+            <textarea
+              value={observaciones}
+              onChange={e => setObservaciones(e.target.value)}
+              rows={3}
+              placeholder="Ingrese observaciones..."
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
+            <div className="flex justify-end">
+              <button
+                onClick={guardarObservaciones} disabled={obsLoading}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+              >
+                {obsLoading ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-h-[60px] whitespace-pre-wrap">
+            {orden.observaciones || <span className="text-gray-400">Sin observaciones</span>}
+          </p>
+        )}
+      </div>
+
       {/* Progreso repuestos */}
       <div className="bg-white rounded-xl border border-gray-200 p-4">
         <div className="flex gap-6">
@@ -346,6 +394,7 @@ export default function OrdenDetalle({
                 ejecutivo_id:   'Ejecutivo asignado',
                 estado:         'Estado',
                 guia:           'Guía de despacho',
+                observaciones:  'Observaciones',
               }
               const formatVal = (v: string) => {
                 if (v === 'true')  return { txt: 'Sí',  cls: 'text-green-600' }
