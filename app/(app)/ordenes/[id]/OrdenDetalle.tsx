@@ -158,7 +158,7 @@ export default function OrdenDetalle({
   const canDespacho = CAN_DESPACHADO.includes(perfil.perfil)
   const canAsignar  = CAN_ASIGNAR.includes(perfil.perfil)
   const canGuia     = CAN_GUIA.includes(perfil.perfil)
-  const canObs      = ['admin', 'supervisor'].includes(perfil.perfil)
+  const canObs      = true // todos los perfiles pueden agregar observaciones
   const canRebajado = CAN_REBAJADO.includes(perfil.perfil)
   const esAdmin     = perfil.perfil === 'admin'
 
@@ -195,11 +195,11 @@ export default function OrdenDetalle({
               disabled={rebajadoLoading}
               className={`text-xs px-3 py-1 rounded-full border transition disabled:opacity-50 ${
                 rebajado
-                  ? 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200'
+                  ? 'bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200'
                   : 'bg-gray-100 text-gray-500 border-gray-300 hover:bg-gray-200'
               }`}
             >
-              Rebajado: {rebajado ? 'Sí' : 'No'}
+              ¿Está rebajado? {rebajado ? 'Sí' : 'No'}
             </button>
           )}
           {esAdmin && orden.estado !== 'Anulada' && (
@@ -249,89 +249,60 @@ export default function OrdenDetalle({
         )}
       </div>
 
-      {/* Asignar ejecutivo */}
-      {canAsignar && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-end gap-3">
-          <div className="flex-1">
-            <label className="text-sm font-medium text-gray-700 block mb-1">Ejecutivo asignado</label>
-            <select
-              value={ejecutivoId}
-              onChange={e => setEjecutivoId(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Sin asignar</option>
-              {ejecutivos.map(e => <option key={e.id} value={e.id}>{e.nombre} ({e.email})</option>)}
-            </select>
-          </div>
-          <button
-            onClick={asignarEjecutivo} disabled={ejLoading}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
-          >
-            {ejLoading ? 'Guardando...' : 'Guardar'}
-          </button>
-        </div>
-      )}
-
-      {/* Guía de despacho */}
-      {perfil.perfil !== 'ejecutivo' && (
-        <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-end gap-3">
-          <div className="flex-1">
-            <label className="text-sm font-medium text-gray-700 block mb-1">Guía de despacho</label>
-            {canGuia ? (
-              <input
-                type="text"
-                value={guia}
-                onChange={e => setGuia(e.target.value)}
-                placeholder="N° de guía..."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            ) : (
-              <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-lg border border-gray-200">
-                {orden.guia ?? <span className="text-gray-400">Sin guía registrada</span>}
-              </p>
-            )}
-          </div>
-          {canGuia && (
-            <button
-              onClick={guardarGuia} disabled={guiaLoading}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
-            >
-              {guiaLoading ? 'Guardando...' : 'Guardar'}
-            </button>
+      {/* Ejecutivo + Guía en la misma fila */}
+      {(canAsignar || perfil.perfil !== 'ejecutivo') && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {canAsignar && (
+            <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-end gap-3">
+              <div className="flex-1">
+                <label className="text-sm font-medium text-gray-700 block mb-1">Ejecutivo asignado</label>
+                <select
+                  value={ejecutivoId}
+                  onChange={e => setEjecutivoId(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Sin asignar</option>
+                  {ejecutivos.map(e => <option key={e.id} value={e.id}>{e.nombre} ({e.email})</option>)}
+                </select>
+              </div>
+              <button
+                onClick={asignarEjecutivo} disabled={ejLoading}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+              >
+                {ejLoading ? '...' : 'Guardar'}
+              </button>
+            </div>
+          )}
+          {perfil.perfil !== 'ejecutivo' && (
+            <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-end gap-3">
+              <div className="flex-1">
+                <label className="text-sm font-medium text-gray-700 block mb-1">Guía de despacho</label>
+                {canGuia ? (
+                  <input
+                    type="text"
+                    value={guia}
+                    onChange={e => setGuia(e.target.value)}
+                    placeholder="N° de guía..."
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                ) : (
+                  <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-lg border border-gray-200">
+                    {orden.guia ?? <span className="text-gray-400">Sin guía registrada</span>}
+                  </p>
+                )}
+              </div>
+              {canGuia && (
+                <button
+                  onClick={guardarGuia} disabled={guiaLoading}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {guiaLoading ? '...' : 'Guardar'}
+                </button>
+              )}
+            </div>
           )}
         </div>
       )}
-
-      {/* Observaciones */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
-        <label className="text-sm font-medium text-gray-700 block">Observaciones</label>
-        {canObs && (
-          <div className="flex flex-col gap-2">
-            <textarea
-              value={nuevaObs}
-              onChange={e => setNuevaObs(e.target.value)}
-              rows={2}
-              placeholder="Agregar observación..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-            />
-            <div className="flex justify-end">
-              <button
-                onClick={guardarObservaciones} disabled={obsLoading || !nuevaObs.trim()}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
-              >
-                {obsLoading ? 'Guardando...' : 'Agregar'}
-              </button>
-            </div>
-          </div>
-        )}
-        {orden.observaciones ? (
-          <div className="text-sm text-gray-700 bg-gray-50 rounded-lg border border-gray-200 px-3 py-2 whitespace-pre-wrap">
-            {orden.observaciones}
-          </div>
-        ) : (
-          <p className="text-sm text-gray-400 px-3 py-2">Sin observaciones</p>
-        )}
-      </div>
 
       {/* Progreso repuestos */}
       <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -415,6 +386,38 @@ export default function OrdenDetalle({
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Observaciones */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100">
+          <h2 className="font-semibold text-gray-900">Observaciones</h2>
+        </div>
+        {canObs && (
+          <div className="px-5 py-4 border-b border-gray-100 flex gap-3">
+            <textarea
+              value={nuevaObs}
+              onChange={e => setNuevaObs(e.target.value)}
+              placeholder="Agregar observación..."
+              rows={2}
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
+            <button
+              onClick={guardarObservaciones}
+              disabled={obsLoading || !nuevaObs.trim()}
+              className="self-end bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
+            >
+              {obsLoading ? '...' : 'Agregar'}
+            </button>
+          </div>
+        )}
+        {orden.observaciones ? (
+          <div className="px-5 py-4">
+            <pre className="text-sm text-gray-700 whitespace-pre-wrap font-sans">{orden.observaciones}</pre>
+          </div>
+        ) : (
+          <p className="px-5 py-6 text-sm text-gray-400 text-center">Sin observaciones</p>
+        )}
       </div>
 
       {/* Historial */}

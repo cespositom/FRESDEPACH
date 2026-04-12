@@ -1,7 +1,12 @@
 import { getPerfil, createServerSupabase } from '@/lib/server'
 import Link from 'next/link'
 
-export default async function RepuestosPendientesPage() {
+export default async function RepuestosPendientesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ codigo?: string }>
+}) {
+  const params = await searchParams
   const perfil = await getPerfil()
   const supabase = await createServerSupabase()
 
@@ -21,6 +26,10 @@ export default async function RepuestosPendientesPage() {
   let lista = (repuestos ?? []).filter((r: any) => r.orden)
   if (perfil?.perfil === 'ejecutivo') {
     lista = lista.filter((r: any) => r.orden.ejecutivo_id === perfil.id)
+  }
+  if (params.codigo) {
+    const q = params.codigo.toLowerCase()
+    lista = lista.filter((r: any) => r.codigo_repuesto?.toLowerCase().includes(q))
   }
 
   lista.sort((a: any, b: any) => (a.orden.dias_restantes ?? 999) - (b.orden.dias_restantes ?? 999))
@@ -48,6 +57,22 @@ export default async function RepuestosPendientesPage() {
           {lista.length} repuestos sin marcar como listo · ordenados por urgencia
         </p>
       </div>
+
+      {/* Filtro por código */}
+      <form method="get" className="flex gap-2">
+        <input name="codigo" defaultValue={params.codigo}
+          placeholder="Filtrar por código repuesto..."
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
+          Buscar
+        </button>
+        {params.codigo && (
+          <Link href="/repuestos" className="px-4 py-2 rounded-lg text-sm border border-gray-300 hover:bg-gray-50">
+            Limpiar
+          </Link>
+        )}
+      </form>
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
 
