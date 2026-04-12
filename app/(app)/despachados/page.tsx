@@ -15,6 +15,7 @@ export default async function DespachosListosPage({
     .from('ordenes_con_vencimiento')
     .select('*')
     .gt('total_repuestos', 0)
+    .not('fecha_despacho', 'is', null)
     .order('fecha_despacho', { ascending: false })
     .limit(200)
 
@@ -29,12 +30,7 @@ export default async function DespachosListosPage({
   }
 
   const { data: todas } = await query
-
-  // Despachados: todos los repuestos con despachado_ok O con fecha_despacho registrada
-  const ordenes = (todas ?? []).filter((o: any) =>
-    Number(o.repuestos_despachados) >= Number(o.total_repuestos) ||
-    o.fecha_despacho != null
-  )
+  const ordenes = todas ?? []
 
   return (
     <div className="space-y-5">
@@ -91,7 +87,7 @@ export default async function DespachosListosPage({
                 <th className="px-4 py-3 text-left font-medium text-gray-500">N° Orden</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Siniestro</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Vehículo</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Aseguradora</th>
+                <th className="px-4 py-3 text-center font-medium text-gray-500">Repuestos</th>
                 {!esEjec && <th className="px-4 py-3 text-left font-medium text-gray-500">Taller</th>}
                 {!esEjec && <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>}
                 <th className="px-4 py-3"></th>
@@ -111,7 +107,11 @@ export default async function DespachosListosPage({
                     <div className="font-medium">{o.patente}</div>
                     <div className="text-xs text-gray-400">{o.marca} {o.modelo}</div>
                   </td>
-                  <td className="px-4 py-3 text-gray-600 max-w-[130px] truncate">{o.aseguradora_nombre}</td>
+                  <td className="px-4 py-3 text-center">
+                    <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                      {o.repuestos_despachados}/{o.total_repuestos}
+                    </span>
+                  </td>
                   {!esEjec && <td className="px-4 py-3 text-gray-600 max-w-[130px] truncate">{o.taller_nombre}</td>}
                   {!esEjec && <td className="px-4 py-3 text-gray-500">{o.ejecutivo_nombre ?? <span className="text-gray-300">—</span>}</td>}
                   <td className="px-4 py-3">
