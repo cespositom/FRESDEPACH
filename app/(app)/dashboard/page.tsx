@@ -62,22 +62,6 @@ export default async function DashboardPage() {
     { count: porRebajar },
   ] = await Promise.all([qPendientes, qVencidas, qVencer2d, qSinDespacho, qPorRebajar])
 
-  // ── Órdenes por rebajar ────────────────────────────────────────
-  let qOrdRebajar = (supabase as any)
-    .from('ordenes_con_vencimiento')
-    .select('*')
-    .not('fecha_despacho', 'is', null)
-    .eq('rebajado', false)
-    .neq('estado', 'Anulada')
-    .order('fecha_despacho', { ascending: false })
-    .limit(50)
-
-  if (esEjecutivo) {
-    qOrdRebajar = qOrdRebajar.eq('ejecutivo_id', perfil!.id)
-  }
-
-  const { data: ordenesRebajar } = await qOrdRebajar
-
   // ── Resumen por ejecutivo (solo admin/supervisor) ─────────────
   let resumenEjecutivos: {
     id: string; nombre: string
@@ -199,73 +183,6 @@ export default async function DashboardPage() {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className="font-semibold text-gray-700">{ej.totalMes}</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Tabla por rebajar */}
-      {(ordenesRebajar ?? []).length > 0 && (
-        <div className="bg-white rounded-xl border border-purple-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-purple-100">
-            <h2 className="font-semibold text-gray-900">Por rebajar</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Órdenes despachadas pendientes de rebaje</p>
-          </div>
-
-          {/* Mobile: cards */}
-          <div className="md:hidden divide-y divide-gray-100">
-            {(ordenesRebajar ?? []).map((o: any) => (
-              <div key={o.id} className="px-4 py-3 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium text-gray-900">{o.numero_orden}</span>
-                  <span className="text-xs text-green-600 font-semibold">
-                    {o.fecha_despacho ? new Date(o.fecha_despacho + 'T12:00:00').toLocaleDateString('es-CL') : '—'}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-500">{o.patente} · {o.marca} {o.modelo}</p>
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-xs text-gray-400">{o.ejecutivo_nombre ?? '—'}</span>
-                  <Link href={`/ordenes/${o.id}`} className="text-blue-600 text-xs font-medium">Ver →</Link>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Desktop: table */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-purple-50 border-b border-purple-100">
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Orden</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Vehículo</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Fecha despacho</th>
-                  <th className="px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {(ordenesRebajar ?? []).map((o: any) => (
-                  <tr key={o.id} className="hover:bg-purple-50 transition">
-                    <td className="px-4 py-3">
-                      <div className="font-medium">{o.numero_orden}</div>
-                      <div className="text-xs text-gray-400">{o.aseguradora_nombre}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div>{o.patente}</div>
-                      <div className="text-xs text-gray-400">{o.marca} {o.modelo}</div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{o.ejecutivo_nombre ?? <span className="text-gray-300">—</span>}</td>
-                    <td className="px-4 py-3 text-green-600 font-semibold">
-                      {o.fecha_despacho ? new Date(o.fecha_despacho + 'T12:00:00').toLocaleDateString('es-CL') : '—'}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link href={`/ordenes/${o.id}`} className="text-blue-600 hover:text-blue-800 text-xs font-medium">
-                        Ver →
-                      </Link>
                     </td>
                   </tr>
                 ))}

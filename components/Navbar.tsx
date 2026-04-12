@@ -30,6 +30,7 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
     { href: '/repuestos',        label: 'Repuestos' },
     { href: '/despacho',         label: 'Despacho' },
     { href: '/despachados',      label: 'Despachados' },
+    ...(perfil.perfil !== 'logistica' ? [{ href: '/porrebajar', label: 'Por Rebajar' }] : []),
     ...(perfil.perfil !== 'logistica' ? [{ href: '/ordenes', label: 'Órdenes' }] : []),
     ...(['admin', 'supervisor'].includes(perfil.perfil) ? [{ href: '/anuladas', label: 'Anuladas' }] : []),
     ...(['admin', 'supervisor'].includes(perfil.perfil) ? [{ href: '/bci', label: 'Cargar' }] : []),
