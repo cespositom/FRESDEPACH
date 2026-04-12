@@ -66,7 +66,7 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${BADGE[perfil.perfil] || 'bg-gray-100 text-gray-600'}`}>
               {perfil.perfil}
             </span>
-            <Link href="/perfil" className="text-sm text-gray-600 max-w-[120px] truncate hover:text-blue-600 transition">
+            <Link href="/perfil" className="text-sm font-black uppercase text-gray-900 max-w-[120px] truncate hover:text-blue-600 transition">
               {perfil.nombre}
             </Link>
             <button onClick={logout} className="text-xs text-gray-400 hover:text-gray-600 transition">
@@ -113,7 +113,7 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
                 {perfil.perfil}
               </span>
               <Link href="/perfil" onClick={() => setOpen(false)}
-                className="text-sm text-gray-600 hover:text-blue-600 transition">
+                className="text-sm font-black uppercase text-gray-900 hover:text-blue-600 transition">
                 {perfil.nombre}
               </Link>
             </div>
