@@ -62,9 +62,7 @@ export default async function PorRebajarPage() {
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Fecha despacho</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">N° Orden</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Vehículo</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Aseguradora</th>
                 {!esEjec && <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>}
-                {!esEjec && <th className="px-4 py-3 text-left font-medium text-gray-500">Taller</th>}
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -79,9 +77,7 @@ export default async function PorRebajarPage() {
                     <div>{o.patente}</div>
                     <div className="text-xs text-gray-400">{o.marca} {o.modelo}</div>
                   </td>
-                  <td className="px-4 py-3 text-gray-600 max-w-[130px] truncate">{o.aseguradora_nombre}</td>
                   {!esEjec && <td className="px-4 py-3 text-gray-600">{o.ejecutivo_nombre ?? <span className="text-gray-300">—</span>}</td>}
-                  {!esEjec && <td className="px-4 py-3 text-gray-600 max-w-[130px] truncate">{o.taller_nombre}</td>}
                   <td className="px-4 py-3">
                     <Link href={`/ordenes/${o.id}`}
                       className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
@@ -92,7 +88,7 @@ export default async function PorRebajarPage() {
               ))}
               {(!ordenes || ordenes.length === 0) && (
                 <tr>
-                  <td colSpan={esEjec ? 5 : 7} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={esEjec ? 4 : 5} className="px-4 py-10 text-center text-gray-400">
                     No hay órdenes por rebajar
                   </td>
                 </tr>
