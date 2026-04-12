@@ -21,6 +21,7 @@ const CAN_LISTO = ['admin', 'supervisor', 'ejecutivo']
 const CAN_DESPACHADO = ['admin', 'logistica']
 const CAN_ASIGNAR = ['admin', 'supervisor']
 const CAN_GUIA = ['admin', 'supervisor']
+const CAN_REBAJADO = ['admin', 'supervisor', 'ejecutivo']
 
 export default function OrdenDetalle({
   orden, repuestos, ejecutivos, auditoria, perfil
@@ -35,8 +36,10 @@ export default function OrdenDetalle({
   const [localRep, setLocalRep] = useState<Repuesto[]>(repuestos)
   const [guia, setGuia] = useState<string>(orden.guia ?? '')
   const [guiaLoading, setGuiaLoading] = useState(false)
-  const [observaciones, setObservaciones] = useState<string>(orden.observaciones ?? '')
+  const [nuevaObs, setNuevaObs] = useState<string>('')
   const [obsLoading, setObsLoading] = useState(false)
+  const [rebajado, setRebajado] = useState<boolean>(orden.rebajado ?? false)
+  const [rebajadoLoading, setRebajadoLoading] = useState(false)
   const [accionLoading, setAccionLoading] = useState<'anular' | 'eliminar' | null>(null)
 
   async function toggleField(rep: Repuesto, field: 'listo_despacho' | 'despachado_ok') {
@@ -86,20 +89,33 @@ export default function OrdenDetalle({
   }
 
   async function guardarObservaciones() {
+    if (!nuevaObs.trim()) return
     setObsLoading(true)
-    const { error } = await supabase.from('ordenes').update({ observaciones }).eq('id', orden.id)
+    const fecha = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+    const entrada = `[${fecha} - ${perfil.nombre}]\n${nuevaObs.trim()}`
+    const actual = orden.observaciones ?? ''
+    const nuevo = actual ? `${entrada}\n\n${actual}` : entrada
+    const { error } = await supabase.from('ordenes').update({ observaciones: nuevo }).eq('id', orden.id)
     if (!error) {
-      await supabase.from('auditoria').insert({
-        tabla: 'ordenes',
-        registro_id: orden.id,
-        campo: 'observaciones',
-        valor_anterior: orden.observaciones ?? '',
-        valor_nuevo: observaciones,
-        usuario_nombre: perfil.nombre,
-      })
+      setNuevaObs('')
       router.refresh()
     }
     setObsLoading(false)
+  }
+
+  async function toggleRebajado() {
+    setRebajadoLoading(true)
+    const nuevo = !rebajado
+    const { error } = await supabase.from('ordenes').update({ rebajado: nuevo }).eq('id', orden.id)
+    if (!error) {
+      setRebajado(nuevo)
+      await supabase.from('auditoria').insert({
+        tabla: 'ordenes', registro_id: orden.id, campo: 'rebajado',
+        valor_anterior: String(rebajado), valor_nuevo: String(nuevo),
+        usuario_nombre: perfil.nombre,
+      })
+    }
+    setRebajadoLoading(false)
   }
 
   async function anularOrden() {
@@ -143,6 +159,7 @@ export default function OrdenDetalle({
   const canAsignar  = CAN_ASIGNAR.includes(perfil.perfil)
   const canGuia     = CAN_GUIA.includes(perfil.perfil)
   const canObs      = ['admin', 'supervisor'].includes(perfil.perfil)
+  const canRebajado = CAN_REBAJADO.includes(perfil.perfil)
   const esAdmin     = perfil.perfil === 'admin'
 
   const listos    = localRep.filter(r => r.listo_despacho).length
@@ -172,6 +189,19 @@ export default function OrdenDetalle({
           }`}>
             {orden.estado}
           </span>
+          {canRebajado && (
+            <button
+              onClick={toggleRebajado}
+              disabled={rebajadoLoading}
+              className={`text-xs px-3 py-1 rounded-full border transition disabled:opacity-50 ${
+                rebajado
+                  ? 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200'
+                  : 'bg-gray-100 text-gray-500 border-gray-300 hover:bg-gray-200'
+              }`}
+            >
+              Rebajado: {rebajado ? 'Sí' : 'No'}
+            </button>
+          )}
           {esAdmin && orden.estado !== 'Anulada' && (
             <button
               onClick={anularOrden}
@@ -273,30 +303,33 @@ export default function OrdenDetalle({
       )}
 
       {/* Observaciones */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-2">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-3">
         <label className="text-sm font-medium text-gray-700 block">Observaciones</label>
-        {canObs ? (
+        {canObs && (
           <div className="flex flex-col gap-2">
             <textarea
-              value={observaciones}
-              onChange={e => setObservaciones(e.target.value)}
-              rows={3}
-              placeholder="Ingrese observaciones..."
+              value={nuevaObs}
+              onChange={e => setNuevaObs(e.target.value)}
+              rows={2}
+              placeholder="Agregar observación..."
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
             <div className="flex justify-end">
               <button
-                onClick={guardarObservaciones} disabled={obsLoading}
+                onClick={guardarObservaciones} disabled={obsLoading || !nuevaObs.trim()}
                 className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 disabled:opacity-50"
               >
-                {obsLoading ? 'Guardando...' : 'Guardar'}
+                {obsLoading ? 'Guardando...' : 'Agregar'}
               </button>
             </div>
           </div>
+        )}
+        {orden.observaciones ? (
+          <div className="text-sm text-gray-700 bg-gray-50 rounded-lg border border-gray-200 px-3 py-2 whitespace-pre-wrap">
+            {orden.observaciones}
+          </div>
         ) : (
-          <p className="px-3 py-2 text-sm text-gray-700 bg-gray-50 rounded-lg border border-gray-200 min-h-[60px] whitespace-pre-wrap">
-            {orden.observaciones || <span className="text-gray-400">Sin observaciones</span>}
-          </p>
+          <p className="text-sm text-gray-400 px-3 py-2">Sin observaciones</p>
         )}
       </div>
 
