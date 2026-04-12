@@ -37,7 +37,7 @@ export default async function DashboardPage() {
 
   let qVencidas    = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).lt('dias_restantes', 0).is('fecha_despacho', null)
   let qVencer2d    = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).gte('dias_restantes', 0).lte('dias_restantes', 2).is('fecha_despacho', null)
-  let qSinDespacho = (supabase as any).from('repuestos_orden').select('id, orden:ordenes!inner(estado)', { count: 'exact', head: true }).eq('despachado_ok', false).neq('orden.estado', 'Anulada')
+  let qSinDespacho = (supabase as any).from('ordenes').select('*', { count: 'exact', head: true }).is('fecha_despacho', null).neq('estado', 'Anulada')
 
   // Repuestos pendientes: solo de órdenes asignadas al ejecutivo si corresponde
   let qPendientes = (supabase as any)
@@ -49,7 +49,7 @@ export default async function DashboardPage() {
     qVencidas    = qVencidas.eq('ejecutivo_id', perfil!.id)
     qVencer2d    = qVencer2d.eq('ejecutivo_id', perfil!.id)
     qPendientes  = qPendientes.eq('orden.ejecutivo_id', perfil!.id)
-    qSinDespacho = qSinDespacho.eq('orden.ejecutivo_id', perfil!.id)
+    qSinDespacho = qSinDespacho.eq('ejecutivo_id', perfil!.id)
   }
 
   const [
