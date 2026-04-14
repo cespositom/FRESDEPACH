@@ -18,7 +18,7 @@ type Repuesto = {
 type Perfil = { id: string; nombre: string; perfil: string }
 
 const CAN_LISTO = ['admin', 'supervisor', 'ejecutivo']
-const CAN_DESPACHADO = ['admin', 'logistica']
+const CAN_DESPACHADO = ['admin', 'supervisor', 'logistica']
 const CAN_ASIGNAR = ['admin', 'supervisor']
 const CAN_GUIA = ['admin', 'supervisor']
 const CAN_REBAJADO = ['admin', 'supervisor', 'ejecutivo']
