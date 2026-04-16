@@ -13,16 +13,15 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Variables embebidas en el bundle (NEXT_PUBLIC) y disponibles en runtime
+# Variables embebidas en el bundle (NEXT_PUBLIC) — solo las que Next.js necesita en build time
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
-ARG SUPABASE_SERVICE_ROLE_KEY
 ARG ALLOWED_ORIGIN
 
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
-ENV SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
 ENV ALLOWED_ORIGIN=$ALLOWED_ORIGIN
+# SUPABASE_SERVICE_ROLE_KEY se inyecta en runtime por Easypanel, no en build
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Validar que las vars estén presentes antes de compilar
@@ -37,11 +36,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Variables de servidor inyectadas en runtime por Easypanel
-ARG SUPABASE_SERVICE_ROLE_KEY
-ARG ALLOWED_ORIGIN
-ENV SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
-ENV ALLOWED_ORIGIN=$ALLOWED_ORIGIN
+# SUPABASE_SERVICE_ROLE_KEY y ALLOWED_ORIGIN son inyectadas en runtime por Easypanel
+# No se declaran aquí para evitar que queden grabadas en las capas de la imagen
 
 RUN addgroup --system --gid 1001 nodejs && \
     adduser  --system --uid  1001 nextjs
