@@ -35,15 +35,24 @@ export default async function DespachoPorComunaPage() {
   const tallerMap: Record<number, any> = {}
   ;(talleres ?? []).forEach((t: any) => { tallerMap[t.id] = t })
 
-  const porComuna: Record<string, any[]> = {}
+  // Agrupar: región → comuna → órdenes
+  const porRegion: Record<string, Record<string, any[]>> = {}
   ordenes.forEach((o: any) => {
-    const taller = tallerMap[o.taller_id]
-    const comuna = taller?.comuna ?? 'Sin comuna'
-    if (!porComuna[comuna]) porComuna[comuna] = []
-    porComuna[comuna].push({ ...o, taller_comuna: comuna, taller_region: taller?.region, taller_direccion: taller?.direccion })
+    const taller  = tallerMap[o.taller_id]
+    const region  = taller?.region  ?? 'Sin región'
+    const comuna  = taller?.comuna  ?? 'Sin comuna'
+    if (!porRegion[region]) porRegion[region] = {}
+    if (!porRegion[region][comuna]) porRegion[region][comuna] = []
+    porRegion[region][comuna].push({
+      ...o,
+      taller_comuna:    comuna,
+      taller_region:    region,
+      taller_direccion: taller?.direccion ?? null,
+    })
   })
 
-  const comunas = Object.keys(porComuna).sort()
+  const regiones = Object.keys(porRegion).sort()
+  const totalOrdenes = ordenes.length
 
   function diasColor(dias: number | null) {
     if (dias === null) return 'text-gray-400'
@@ -62,101 +71,132 @@ export default async function DespachoPorComunaPage() {
 
   return (
     <div className="space-y-6">
+      {/* Título */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Plan de despacho</h1>
         <p className="text-gray-500 text-sm mt-1">
-          {ordenes.length} {ordenes.length === 1 ? 'orden lista' : 'órdenes listas'} · agrupadas por comuna
+          {totalOrdenes} {totalOrdenes === 1 ? 'orden lista' : 'órdenes listas'}
+          {regiones.length > 0 && ` · ${regiones.length} ${regiones.length === 1 ? 'región' : 'regiones'}`}
         </p>
       </div>
 
-      {comunas.length === 0 && (
+      {regiones.length === 0 && (
         <div className="bg-white rounded-xl border border-gray-200 p-10 text-center text-gray-400">
           No hay órdenes con todos los repuestos listos para despacho
         </div>
       )}
 
-      {comunas.map(comuna => {
-        const ords   = porComuna[comuna]
-        const region = ords[0]?.taller_region
+      {regiones.map(region => {
+        const comunas = Object.keys(porRegion[region]).sort()
+        const totalRegion = comunas.reduce((s, c) => s + porRegion[region][c].length, 0)
+
         return (
-          <div key={comuna} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-            {/* Header comuna */}
-            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-              <div>
-                <h2 className="font-bold text-gray-900 text-base">{comuna}</h2>
-                {region && <p className="text-xs text-gray-400 mt-0.5">{region}</p>}
-              </div>
-              <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                {ords.length} {ords.length === 1 ? 'orden' : 'órdenes'}
+          <div key={region} className="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+
+            {/* ── Header región ─────────────────────────────── */}
+            <div className="px-5 py-3 bg-blue-600 flex items-center justify-between">
+              <h2 className="font-bold text-white text-base tracking-wide">{region}</h2>
+              <span className="text-sm font-semibold bg-white/20 text-white px-3 py-0.5 rounded-full">
+                {totalRegion} {totalRegion === 1 ? 'orden' : 'órdenes'}
               </span>
             </div>
 
-            {/* Mobile: cards */}
-            <div className="md:hidden divide-y divide-gray-100">
-              {ords.map((o: any) => (
-                <div key={o.id} className="px-4 py-3 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-sm">{o.numero_orden}</span>
-                    <span className={`text-xs font-semibold ${diasColor(o.dias_restantes)}`}>
-                      {diasLabel(o.dias_restantes)}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500">{o.patente} · {o.marca} {o.modelo}</p>
-                  {!esEjec && <p className="text-xs text-gray-400 truncate">{o.taller_nombre} · {o.taller_direccion ?? ''}</p>}
-                  <div className="flex items-center justify-between pt-0.5">
-                    <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                      {o.repuestos_listos}/{o.total_repuestos} listos
-                    </span>
-                    <Link href={`/ordenes/${o.id}`} className="text-blue-600 text-xs font-medium">Ver →</Link>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* ── Comunas dentro de la región ───────────────── */}
+            <div className="divide-y divide-gray-100 bg-white">
+              {comunas.map(comuna => {
+                const ords = porRegion[region][comuna]
+                return (
+                  <div key={comuna}>
 
-            {/* Desktop: table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Días venc.</th>
-                    <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">N° Orden</th>
-                    <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Siniestro</th>
-                    <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Vehículo</th>
-                    {!esEjec && <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Taller</th>}
-                    {!esEjec && <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Dirección</th>}
-                    <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Repuestos</th>
-                    <th className="px-4 py-2.5"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {ords.map((o: any) => (
-                    <tr key={o.id} className="hover:bg-gray-50 transition">
-                      <td className={`px-4 py-3 text-sm whitespace-nowrap ${diasColor(o.dias_restantes)}`}>
-                        {diasLabel(o.dias_restantes)}
-                      </td>
-                      <td className="px-4 py-3 font-medium">{o.numero_orden}</td>
-                      <td className="px-4 py-3 text-gray-500 text-xs">{o.numero_siniestro ?? '—'}</td>
-                      <td className="px-4 py-3">
-                        <div className="font-medium">{o.patente}</div>
-                        <div className="text-xs text-gray-400">{o.marca} {o.modelo}</div>
-                      </td>
-                      {!esEjec && <td className="px-4 py-3 text-gray-600 max-w-[150px] truncate">{o.taller_nombre}</td>}
-                      {!esEjec && <td className="px-4 py-3 text-gray-500 text-xs max-w-[150px] truncate">{o.taller_direccion ?? '—'}</td>}
-                      <td className="px-4 py-3">
-                        <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                          {o.repuestos_listos}/{o.total_repuestos} listos
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Link href={`/ordenes/${o.id}`}
-                          className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
-                          Ver →
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    {/* Header comuna */}
+                    <div className="px-5 py-2.5 bg-gray-50 flex items-center justify-between border-b border-gray-100">
+                      <h3 className="font-semibold text-gray-700 text-sm">{comuna}</h3>
+                      <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full">
+                        {ords.length} {ords.length === 1 ? 'orden' : 'órdenes'}
+                      </span>
+                    </div>
+
+                    {/* Mobile: cards */}
+                    <div className="md:hidden divide-y divide-gray-100">
+                      {ords.map((o: any) => (
+                        <div key={o.id} className="px-4 py-3 space-y-1">
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-sm">{o.numero_orden}</span>
+                            <span className={`text-xs font-semibold ${diasColor(o.dias_restantes)}`}>
+                              {diasLabel(o.dias_restantes)}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500">{o.patente} · {o.marca} {o.modelo}</p>
+                          {!esEjec && (
+                            <p className="text-xs text-gray-400 truncate">
+                              {o.taller_nombre}{o.taller_direccion ? ` · ${o.taller_direccion}` : ''}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between pt-0.5">
+                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                              {o.repuestos_listos}/{o.total_repuestos} listos
+                            </span>
+                            <Link href={`/ordenes/${o.id}`} className="text-blue-600 text-xs font-medium">Ver →</Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Desktop: tabla */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-100">
+                            <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Días venc.</th>
+                            <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">N° Orden</th>
+                            <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Siniestro</th>
+                            <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Vehículo</th>
+                            {!esEjec && <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Taller</th>}
+                            {!esEjec && <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Dirección</th>}
+                            <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Repuestos</th>
+                            <th className="px-4 py-2.5"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                          {ords.map((o: any) => (
+                            <tr key={o.id} className="hover:bg-gray-50 transition">
+                              <td className={`px-4 py-3 text-sm whitespace-nowrap ${diasColor(o.dias_restantes)}`}>
+                                {diasLabel(o.dias_restantes)}
+                              </td>
+                              <td className="px-4 py-3 font-medium">{o.numero_orden}</td>
+                              <td className="px-4 py-3 text-gray-500 text-xs">{o.numero_siniestro ?? '—'}</td>
+                              <td className="px-4 py-3">
+                                <div className="font-medium">{o.patente}</div>
+                                <div className="text-xs text-gray-400">{o.marca} {o.modelo}</div>
+                              </td>
+                              {!esEjec && (
+                                <td className="px-4 py-3 text-gray-600 max-w-[150px] truncate">{o.taller_nombre}</td>
+                              )}
+                              {!esEjec && (
+                                <td className="px-4 py-3 text-gray-500 text-xs max-w-[150px] truncate">
+                                  {o.taller_direccion ?? '—'}
+                                </td>
+                              )}
+                              <td className="px-4 py-3">
+                                <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">
+                                  {o.repuestos_listos}/{o.total_repuestos} listos
+                                </span>
+                              </td>
+                              <td className="px-4 py-3">
+                                <Link href={`/ordenes/${o.id}`}
+                                  className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
+                                  Ver →
+                                </Link>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                  </div>
+                )
+              })}
             </div>
           </div>
         )
