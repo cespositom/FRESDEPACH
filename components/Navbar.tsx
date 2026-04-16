@@ -3,8 +3,9 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { createBrowserSupabase } from '@/lib/supabase'
+import NotificationBell from './NotificationBell'
 
-type Perfil = { nombre: string; perfil: string; email: string }
+type Perfil = { id: string; nombre: string; perfil: string; email: string }
 
 const BADGE: Record<string, string> = {
   admin:      'bg-red-100 text-red-700',
@@ -64,6 +65,7 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
         {/* Right: user info + hamburger */}
         <div className="flex items-center gap-2">
           <div className="hidden sm:flex items-center gap-2">
+            <NotificationBell userId={perfil.id} />
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${BADGE[perfil.perfil] || 'bg-gray-100 text-gray-600'}`}>
               {perfil.perfil}
             </span>
@@ -110,6 +112,7 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
           ))}
           <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
+              <NotificationBell userId={perfil.id} />
               <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${BADGE[perfil.perfil] || 'bg-gray-100 text-gray-600'}`}>
                 {perfil.perfil}
               </span>
