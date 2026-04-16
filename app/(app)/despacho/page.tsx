@@ -1,7 +1,14 @@
 import { getPerfil, createServerSupabase } from '@/lib/server'
 import Link from 'next/link'
+import { Suspense } from 'react'
+import FiltroDespacho from './FiltroDespacho'
 
-export default async function DespachoPorComunaPage() {
+export default async function DespachoPorComunaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ region?: string; comuna?: string }>
+}) {
+  const params   = await searchParams
   const perfil   = await getPerfil()
   const esEjec   = perfil?.perfil === 'ejecutivo'
   const supabase = await createServerSupabase()
@@ -35,15 +42,15 @@ export default async function DespachoPorComunaPage() {
   const tallerMap: Record<number, any> = {}
   ;(talleres ?? []).forEach((t: any) => { tallerMap[t.id] = t })
 
-  // Agrupar: región → comuna → órdenes
-  const porRegion: Record<string, Record<string, any[]>> = {}
+  // Agrupar: región → comuna → órdenes (sin filtro, para construir los selectores)
+  const porRegionFull: Record<string, Record<string, any[]>> = {}
   ordenes.forEach((o: any) => {
     const taller  = tallerMap[o.taller_id]
     const region  = taller?.region  ?? 'Sin región'
     const comuna  = taller?.comuna  ?? 'Sin comuna'
-    if (!porRegion[region]) porRegion[region] = {}
-    if (!porRegion[region][comuna]) porRegion[region][comuna] = []
-    porRegion[region][comuna].push({
+    if (!porRegionFull[region]) porRegionFull[region] = {}
+    if (!porRegionFull[region][comuna]) porRegionFull[region][comuna] = []
+    porRegionFull[region][comuna].push({
       ...o,
       taller_comuna:    comuna,
       taller_region:    region,
@@ -51,8 +58,29 @@ export default async function DespachoPorComunaPage() {
     })
   })
 
-  const regiones = Object.keys(porRegion).sort()
-  const totalOrdenes = ordenes.length
+  const todasRegiones      = Object.keys(porRegionFull).sort()
+  const comunasPorRegion   = Object.fromEntries(
+    todasRegiones.map(r => [r, Object.keys(porRegionFull[r]).sort()])
+  )
+
+  // Aplicar filtro de región / comuna
+  const filtroRegion = params.region ?? ''
+  const filtroComuna = params.comuna ?? ''
+
+  const porRegion: Record<string, Record<string, any[]>> = {}
+  for (const region of todasRegiones) {
+    if (filtroRegion && region !== filtroRegion) continue
+    for (const comuna of Object.keys(porRegionFull[region])) {
+      if (filtroComuna && comuna !== filtroComuna) continue
+      if (!porRegion[region]) porRegion[region] = {}
+      porRegion[region][comuna] = porRegionFull[region][comuna]
+    }
+  }
+
+  const regiones     = Object.keys(porRegion).sort()
+  const totalOrdenes = regiones.reduce((s, r) =>
+    s + Object.values(porRegion[r]).reduce((ss, arr) => ss + arr.length, 0), 0
+  )
 
   function diasColor(dias: number | null) {
     if (dias === null) return 'text-gray-400'
@@ -71,13 +99,23 @@ export default async function DespachoPorComunaPage() {
 
   return (
     <div className="space-y-6">
-      {/* Título */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Plan de despacho</h1>
-        <p className="text-gray-500 text-sm mt-1">
-          {totalOrdenes} {totalOrdenes === 1 ? 'orden lista' : 'órdenes listas'}
-          {regiones.length > 0 && ` · ${regiones.length} ${regiones.length === 1 ? 'región' : 'regiones'}`}
-        </p>
+      {/* Título + filtros */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Plan de despacho</h1>
+          <p className="text-gray-500 text-sm mt-1">
+            {totalOrdenes} {totalOrdenes === 1 ? 'orden lista' : 'órdenes listas'}
+            {regiones.length > 0 && ` · ${regiones.length} ${regiones.length === 1 ? 'región' : 'regiones'}`}
+          </p>
+        </div>
+        {todasRegiones.length > 0 && (
+          <Suspense>
+            <FiltroDespacho
+              regiones={todasRegiones}
+              comunasPorRegion={comunasPorRegion}
+            />
+          </Suspense>
+        )}
       </div>
 
       {regiones.length === 0 && (
