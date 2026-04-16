@@ -32,7 +32,7 @@ export default async function OrdenesPage({
   const { data: ordenes } = await query.limit(100)
 
   const esEjecutivo = perfil?.perfil === 'ejecutivo'
-  const colSpan = esEjecutivo ? 7 : 10
+  const colSpan = esEjecutivo ? 7 : 9
 
   return (
     <div className="space-y-5">
@@ -75,14 +75,11 @@ export default async function OrdenesPage({
                 {!esEjecutivo && <th className="px-4 py-3 text-left font-medium text-gray-500">Taller</th>}
                 {!esEjecutivo && <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>}
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Estado</th>
-                {!esEjecutivo && <th className="px-4 py-3 text-left font-medium text-gray-500">Vencimiento</th>}
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {(ordenes ?? []).map((o: any) => {
-                const diasR = o.dias_restantes ?? 999
-                const vencColor = diasR < 0 ? 'text-red-600' : diasR <= 3 ? 'text-orange-500' : 'text-gray-600'
                 return (
                   <tr key={o.id} className="hover:bg-gray-50 transition">
                     <td className="px-4 py-3 font-medium">{o.numero_orden}</td>
@@ -102,12 +99,6 @@ export default async function OrdenesPage({
                         'bg-gray-100 text-gray-600'
                       }`}>{o.estado}</span>
                     </td>
-                    {!esEjecutivo && (
-                      <td className={`px-4 py-3 text-xs whitespace-nowrap ${vencColor}`}>
-                        {o.fecha_vencimiento ? new Date(o.fecha_vencimiento).toLocaleDateString('es-CL') : '—'}
-                        {diasR < 999 && <div>{diasR < 0 ? 'Vencida' : `${diasR}d`}</div>}
-                      </td>
-                    )}
                     <td className="px-4 py-3">
                       <Link href={`/ordenes/${o.id}`}
                         className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
