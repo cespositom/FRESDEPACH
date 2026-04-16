@@ -12,18 +12,6 @@ export default async function RepuestosPendientesPage({
 
   const esAdminSup = ['admin', 'supervisor'].includes(perfil?.perfil ?? '')
 
-  // Fetch ejecutivos para el filtro (solo admin/supervisor)
-  let ejecutivos: { id: string; nombre: string }[] = []
-  if (esAdminSup) {
-    const { data } = await (supabase as any)
-      .from('perfiles')
-      .select('id, nombre')
-      .eq('perfil', 'ejecutivo')
-      .eq('activo', true)
-      .order('nombre')
-    ejecutivos = data ?? []
-  }
-
   const { data: repuestos } = await (supabase as any)
     .from('repuestos_orden')
     .select(`
@@ -37,9 +25,27 @@ export default async function RepuestosPendientesPage({
     .eq('despachado_ok', false)
     .order('id')
 
-  let lista = (repuestos ?? []).filter((r: any) =>
+  // Base: excluir anuladas
+  const base = (repuestos ?? []).filter((r: any) =>
     r.orden && r.orden.estado !== 'Anulada'
   )
+
+  // Derivar ejecutivos con órdenes asignadas desde los datos reales
+  const ejecutivos: { id: string; nombre: string }[] = esAdminSup
+    ? Array.from(
+        base
+          .filter((r: any) => r.orden.ejecutivo_id && r.orden.ejecutivo_nombre)
+          .reduce((map: Map<string, string>, r: any) => {
+            map.set(r.orden.ejecutivo_id, r.orden.ejecutivo_nombre)
+            return map
+          }, new Map<string, string>())
+          .entries()
+      )
+        .map(([id, nombre]) => ({ id, nombre }))
+        .sort((a, b) => a.nombre.localeCompare(b.nombre))
+    : []
+
+  let lista = base
 
   if (perfil?.perfil === 'ejecutivo') {
     lista = lista.filter((r: any) => r.orden.ejecutivo_id === perfil.id)
