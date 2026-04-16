@@ -62,6 +62,26 @@ export default function OrdenDetalle({
       const updated = localRep.map(r => r.id === rep.id ? { ...r, [field]: newVal } : r)
       setLocalRep(updated)
 
+      // Todos listo_despacho → notificar a logística
+      if (field === 'listo_despacho' && newVal && updated.every(r => r.listo_despacho)) {
+        const { data: logistica } = await (supabase as any)
+          .from('perfiles')
+          .select('id')
+          .eq('perfil', 'logistica')
+          .eq('activo', true)
+        if (logistica?.length) {
+          await (supabase as any).from('notificaciones').insert(
+            logistica.map((u: any) => ({
+              usuario_id:   u.id,
+              tipo:         'listo_despacho',
+              mensaje:      `Orden ${orden.numero_orden} lista para despacho`,
+              orden_id:     orden.id,
+              orden_numero: orden.numero_orden,
+            }))
+          )
+        }
+      }
+
       // Si todos los repuestos están despachados, marcar fecha_despacho en la orden
       if (field === 'despachado_ok' && newVal && updated.every(r => r.despachado_ok)) {
         await fetch(`/api/ordenes/${orden.id}/despacho`, { method: 'POST' })
@@ -137,7 +157,7 @@ export default function OrdenDetalle({
   async function asignarEjecutivo() {
     setEjLoading(true)
     const ejAnterior = orden.ejecutivo_nombre ?? 'Sin asignar'
-    const ejNuevo = ejecutivos.find(e => e.id === ejecutivoId)?.nombre ?? 'Sin asignar'
+    const ejNuevo    = ejecutivos.find(e => e.id === ejecutivoId)?.nombre ?? 'Sin asignar'
     await supabase
       .from('ordenes')
       .update({ ejecutivo_id: ejecutivoId || null })
@@ -150,6 +170,16 @@ export default function OrdenDetalle({
       valor_nuevo: ejNuevo,
       usuario_nombre: perfil.nombre,
     })
+    // Notificar al ejecutivo asignado (solo si es un usuario real)
+    if (ejecutivoId) {
+      await (supabase as any).from('notificaciones').insert({
+        usuario_id:   ejecutivoId,
+        tipo:         'orden_asignada',
+        mensaje:      `Se te asignó la orden ${orden.numero_orden}`,
+        orden_id:     orden.id,
+        orden_numero: orden.numero_orden,
+      })
+    }
     setEjLoading(false)
     router.refresh()
   }

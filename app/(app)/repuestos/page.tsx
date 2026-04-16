@@ -4,11 +4,25 @@ import Link from 'next/link'
 export default async function RepuestosPendientesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ codigo?: string }>
+  searchParams: Promise<{ codigo?: string; ejecutivo?: string }>
 }) {
-  const params = await searchParams
-  const perfil = await getPerfil()
+  const params  = await searchParams
+  const perfil  = await getPerfil()
   const supabase = await createServerSupabase()
+
+  const esAdminSup = ['admin', 'supervisor'].includes(perfil?.perfil ?? '')
+
+  // Fetch ejecutivos para el filtro (solo admin/supervisor)
+  let ejecutivos: { id: string; nombre: string }[] = []
+  if (esAdminSup) {
+    const { data } = await (supabase as any)
+      .from('perfiles')
+      .select('id, nombre')
+      .eq('perfil', 'ejecutivo')
+      .eq('activo', true)
+      .order('nombre')
+    ejecutivos = data ?? []
+  }
 
   const { data: repuestos } = await (supabase as any)
     .from('repuestos_orden')
@@ -16,16 +30,22 @@ export default async function RepuestosPendientesPage({
       id, nombre_repuesto, codigo_repuesto, cantidad,
       orden:ordenes_con_vencimiento (
         id, numero_orden, numero_siniestro, dias_restantes,
-        ejecutivo_id
+        ejecutivo_id, ejecutivo_nombre, estado
       )
     `)
     .eq('listo_despacho', false)
     .eq('despachado_ok', false)
     .order('id')
 
-  let lista = (repuestos ?? []).filter((r: any) => r.orden)
+  let lista = (repuestos ?? []).filter((r: any) =>
+    r.orden && r.orden.estado !== 'Anulada'
+  )
+
   if (perfil?.perfil === 'ejecutivo') {
     lista = lista.filter((r: any) => r.orden.ejecutivo_id === perfil.id)
+  }
+  if (esAdminSup && params.ejecutivo) {
+    lista = lista.filter((r: any) => r.orden.ejecutivo_id === params.ejecutivo)
   }
   if (params.codigo) {
     const q = params.codigo.toLowerCase()
@@ -49,6 +69,16 @@ export default async function RepuestosPendientesPage({
     return `${dias}d`
   }
 
+  // Construir query string para limpiar filtros
+  function quitarFiltro(key: string) {
+    const p = new URLSearchParams()
+    if (key !== 'codigo'    && params.codigo)    p.set('codigo',    params.codigo)
+    if (key !== 'ejecutivo' && params.ejecutivo) p.set('ejecutivo', params.ejecutivo)
+    return `/repuestos${p.size > 0 ? `?${p}` : ''}`
+  }
+
+  const ejecutivoFiltroNombre = ejecutivos.find(e => e.id === params.ejecutivo)?.nombre
+
   return (
     <div className="space-y-5">
       <div>
@@ -58,21 +88,59 @@ export default async function RepuestosPendientesPage({
         </p>
       </div>
 
-      {/* Filtro por código */}
-      <form method="get" className="flex gap-2">
-        <input name="codigo" defaultValue={params.codigo}
+      {/* Filtros */}
+      <form method="get" className="flex flex-wrap gap-2 items-center">
+        <input
+          name="codigo"
+          defaultValue={params.codigo}
           placeholder="Filtrar por código repuesto..."
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-[180px] max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+
+        {esAdminSup && ejecutivos.length > 0 && (
+          <select
+            name="ejecutivo"
+            defaultValue={params.ejecutivo ?? ''}
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[160px]"
+          >
+            <option value="">Todos los ejecutivos</option>
+            {ejecutivos.map(e => (
+              <option key={e.id} value={e.id}>{e.nombre}</option>
+            ))}
+          </select>
+        )}
+
         <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">
           Buscar
         </button>
-        {params.codigo && (
-          <Link href="/repuestos" className="px-4 py-2 rounded-lg text-sm border border-gray-300 hover:bg-gray-50">
+
+        {(params.codigo || params.ejecutivo) && (
+          <Link
+            href="/repuestos"
+            className="px-4 py-2 rounded-lg text-sm border border-gray-300 hover:bg-gray-50"
+          >
             Limpiar
           </Link>
         )}
       </form>
+
+      {/* Tags de filtros activos */}
+      {(params.codigo || ejecutivoFiltroNombre) && (
+        <div className="flex flex-wrap gap-2">
+          {params.codigo && (
+            <span className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">
+              Código: {params.codigo}
+              <Link href={quitarFiltro('codigo')} className="ml-1 hover:text-blue-900">✕</Link>
+            </span>
+          )}
+          {ejecutivoFiltroNombre && (
+            <span className="flex items-center gap-1 text-xs bg-purple-50 text-purple-700 px-2.5 py-1 rounded-full">
+              Ejecutivo: {ejecutivoFiltroNombre}
+              <Link href={quitarFiltro('ejecutivo')} className="ml-1 hover:text-purple-900">✕</Link>
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
 
@@ -84,6 +152,9 @@ export default async function RepuestosPendientesPage({
                 <p className="font-medium text-sm text-gray-900 truncate">{r.nombre_repuesto}</p>
                 <p className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'} · x{r.cantidad}</p>
                 <p className="text-xs text-gray-500">Orden {r.orden.numero_orden} · {r.orden.numero_siniestro ?? '—'}</p>
+                {esAdminSup && r.orden.ejecutivo_nombre && (
+                  <p className="text-xs text-gray-400">{r.orden.ejecutivo_nombre}</p>
+                )}
               </div>
               <div className="flex flex-col items-end gap-1 shrink-0">
                 <span className={`text-xs font-semibold ${diasColor(r.orden.dias_restantes)}`}>
@@ -98,7 +169,7 @@ export default async function RepuestosPendientesPage({
           )}
         </div>
 
-        {/* Desktop: table */}
+        {/* Desktop: tabla */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -109,6 +180,7 @@ export default async function RepuestosPendientesPage({
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Cant.</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">N° Orden</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Siniestro</th>
+                {esAdminSup && <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>}
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -123,6 +195,9 @@ export default async function RepuestosPendientesPage({
                   <td className="px-4 py-3 text-gray-600">{r.cantidad}</td>
                   <td className="px-4 py-3 font-medium text-gray-800">{r.orden.numero_orden}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{r.orden.numero_siniestro ?? '—'}</td>
+                  {esAdminSup && (
+                    <td className="px-4 py-3 text-gray-500 text-xs">{r.orden.ejecutivo_nombre ?? '—'}</td>
+                  )}
                   <td className="px-4 py-3">
                     <Link href={`/ordenes/${r.orden.id}`}
                       className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
@@ -133,7 +208,7 @@ export default async function RepuestosPendientesPage({
               ))}
               {lista.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={esAdminSup ? 8 : 7} className="px-4 py-10 text-center text-gray-400">
                     No hay repuestos pendientes
                   </td>
                 </tr>
