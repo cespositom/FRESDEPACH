@@ -58,10 +58,10 @@ export default async function DespachoPorComunaPage({
     })
   })
 
-  const todasRegiones      = Object.keys(porRegionFull).sort()
-  const comunasPorRegion   = Object.fromEntries(
-    todasRegiones.map(r => [r, Object.keys(porRegionFull[r]).sort()])
-  )
+  const todasRegiones = Object.keys(porRegionFull).sort()
+  const todasComunas  = Array.from(
+    new Set(todasRegiones.flatMap(r => Object.keys(porRegionFull[r])))
+  ).sort()
 
   // Aplicar filtro de región / comuna
   const filtroRegion = params.region ?? ''
@@ -112,7 +112,7 @@ export default async function DespachoPorComunaPage({
           <Suspense>
             <FiltroDespacho
               regiones={todasRegiones}
-              comunasPorRegion={comunasPorRegion}
+              comunas={todasComunas}
             />
           </Suspense>
         )}
