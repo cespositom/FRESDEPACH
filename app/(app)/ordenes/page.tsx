@@ -15,7 +15,7 @@ export default async function OrdenesPage({
   let query = (supabase as any)
     .from('ordenes_con_vencimiento')
     .select('*')
-    .order('dias_restantes', { ascending: true })
+    .order('fecha', { ascending: false })
 
   if (perfil?.perfil === 'ejecutivo') {
     query = query.eq('ejecutivo_id', perfil.id)
