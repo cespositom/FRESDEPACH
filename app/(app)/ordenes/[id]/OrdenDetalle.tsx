@@ -203,12 +203,25 @@ export default function OrdenDetalle({
           <h1 className="text-2xl font-bold text-gray-900">Orden {orden.numero_orden}</h1>
           <p className="text-gray-500 text-sm mt-1">
             {orden.aseguradora_nombre} · {fmtFecha(orden.fecha)}
-            {perfil.perfil !== 'ejecutivo' && orden.fecha_vencimiento && (
-              <span className={`ml-2 font-medium ${orden.dias_restantes < 0 ? 'text-red-600' : orden.dias_restantes <= 3 ? 'text-orange-500' : 'text-gray-600'}`}>
-                · Vence {fmtFecha(orden.fecha_vencimiento)}
-                {orden.dias_restantes < 0 ? ` (vencida ${Math.abs(orden.dias_restantes)}d)` : ` (${orden.dias_restantes}d)`}
-              </span>
-            )}
+            {perfil.perfil !== 'ejecutivo' && (() => {
+              const totalDespachados = localRep.length > 0 && localRep.every(r => r.despachado_ok)
+              if (totalDespachados && orden.fecha_despacho) {
+                return (
+                  <span className="ml-2 font-medium text-green-600">
+                    · Entregado {fmtFecha(orden.fecha_despacho)}
+                  </span>
+                )
+              }
+              if (orden.fecha_vencimiento) {
+                return (
+                  <span className={`ml-2 font-medium ${orden.dias_restantes < 0 ? 'text-red-600' : orden.dias_restantes <= 3 ? 'text-orange-500' : 'text-gray-600'}`}>
+                    · Vence {fmtFecha(orden.fecha_vencimiento)}
+                    {orden.dias_restantes < 0 ? ` (vencida ${Math.abs(orden.dias_restantes)}d)` : ` (${orden.dias_restantes}d)`}
+                  </span>
+                )
+              }
+              return null
+            })()}
           </p>
         </div>
         <div className="flex items-center gap-2">
