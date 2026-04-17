@@ -24,6 +24,7 @@ export default async function DashboardPage() {
   let query = (supabase as any)
     .from('ordenes_con_vencimiento')
     .select('*')
+    .neq('estado', 'Anulada')
     .lte('dias_restantes', 30)
     .is('fecha_despacho', null)
     .order('dias_restantes', { ascending: true })
@@ -35,8 +36,8 @@ export default async function DashboardPage() {
 
   const { data: ordenes } = await query
 
-  let qVencidas    = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).lt('dias_restantes', 0).is('fecha_despacho', null)
-  let qVencer2d    = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).gte('dias_restantes', 0).lte('dias_restantes', 2).is('fecha_despacho', null)
+  let qVencidas    = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).neq('estado', 'Anulada').lt('dias_restantes', 0).is('fecha_despacho', null)
+  let qVencer2d    = (supabase as any).from('ordenes_con_vencimiento').select('*', { count: 'exact', head: true }).neq('estado', 'Anulada').gte('dias_restantes', 0).lte('dias_restantes', 2).is('fecha_despacho', null)
   let qSinDespacho = (supabase as any).from('ordenes').select('*', { count: 'exact', head: true }).is('fecha_despacho', null).neq('estado', 'Anulada')
   let qPorRebajar  = (supabase as any).from('ordenes').select('*', { count: 'exact', head: true }).not('fecha_despacho', 'is', null).eq('rebajado', false).neq('estado', 'Anulada')
 
@@ -80,8 +81,8 @@ export default async function DashboardPage() {
       { data: repsPendientes },
     ] = await Promise.all([
       (supabase as any).from('perfiles').select('id, nombre').eq('perfil', 'ejecutivo').order('nombre'),
-      (supabase as any).from('ordenes_con_vencimiento').select('ejecutivo_id, dias_restantes, fecha_despacho'),
-      (supabase as any).from('ordenes').select('ejecutivo_id').gte('created_at', startOfMonth.toISOString()),
+      (supabase as any).from('ordenes_con_vencimiento').select('ejecutivo_id, dias_restantes, fecha_despacho').neq('estado', 'Anulada'),
+      (supabase as any).from('ordenes').select('ejecutivo_id').neq('estado', 'Anulada').gte('created_at', startOfMonth.toISOString()),
       (supabase as any).from('repuestos_orden').select('id, orden:ordenes!inner(ejecutivo_id)').eq('listo_despacho', false),
     ])
 

@@ -15,6 +15,7 @@ export default async function OrdenesPage({
   let query = (supabase as any)
     .from('ordenes_con_vencimiento')
     .select('*')
+    .neq('estado', 'Anulada')
     .order('fecha', { ascending: false })
 
   if (perfil?.perfil === 'ejecutivo') {
