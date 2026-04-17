@@ -62,10 +62,12 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
           </div>
         </div>
 
-        {/* Right: user info + hamburger */}
+        {/* Right: campana + user info + hamburger */}
         <div className="flex items-center gap-2">
+          {/* Campana siempre visible — una sola instancia */}
+          <NotificationBell userId={perfil.id} />
+
           <div className="hidden sm:flex items-center gap-2">
-            <NotificationBell userId={perfil.id} />
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${BADGE[perfil.perfil] || 'bg-gray-100 text-gray-600'}`}>
               {perfil.perfil}
             </span>
@@ -112,7 +114,6 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
           ))}
           <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <NotificationBell userId={perfil.id} />
               <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${BADGE[perfil.perfil] || 'bg-gray-100 text-gray-600'}`}>
                 {perfil.perfil}
               </span>
