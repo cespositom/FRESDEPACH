@@ -7,7 +7,7 @@ type Notif = {
   id: number
   tipo: string
   mensaje: string
-  orden_id: string | null
+  orden_id: number | null
   orden_numero: string | null
   leida: boolean
   created_at: string
