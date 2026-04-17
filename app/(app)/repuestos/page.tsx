@@ -1,6 +1,7 @@
 import { getPerfil, createServerSupabase } from '@/lib/server'
 import Link from 'next/link'
 import EncargadoToggle from './EncargadoToggle'
+import ListoDespachoToggle from './ListoDespachoToggle'
 
 export default async function RepuestosPendientesPage({
   searchParams,
@@ -11,12 +12,13 @@ export default async function RepuestosPendientesPage({
   const perfil  = await getPerfil()
   const supabase = await createServerSupabase()
 
-  const esAdminSup = ['admin', 'supervisor'].includes(perfil?.perfil ?? '')
+  const esAdminSup  = ['admin', 'supervisor'].includes(perfil?.perfil ?? '')
+  const puedeMarcarListo = ['admin', 'supervisor', 'ejecutivo'].includes(perfil?.perfil ?? '')
 
   const { data: repuestos } = await (supabase as any)
     .from('repuestos_orden')
     .select(`
-      id, nombre_repuesto, codigo_repuesto, cantidad, encargado,
+      id, nombre_repuesto, codigo_repuesto, cantidad, encargado, listo_despacho,
       orden:ordenes_con_vencimiento (
         id, numero_orden, numero_siniestro, dias_restantes,
         ejecutivo_id, ejecutivo_nombre, estado,
@@ -196,11 +198,20 @@ export default async function RepuestosPendientesPage({
                     <p className="font-medium text-sm text-gray-900 truncate">{r.nombre_repuesto}</p>
                     <p className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</p>
                   </div>
-                  <EncargadoToggle
-                    repuestoId={r.id}
-                    inicial={r.encargado ?? false}
-                    editable={esAdminSup}
-                  />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <ListoDespachoToggle
+                      repuestoId={r.id}
+                      ordenId={orden.id}
+                      ordenNumero={orden.numero_orden}
+                      inicial={r.listo_despacho ?? false}
+                      editable={puedeMarcarListo}
+                    />
+                    <EncargadoToggle
+                      repuestoId={r.id}
+                      inicial={r.encargado ?? false}
+                      editable={esAdminSup}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
@@ -211,6 +222,7 @@ export default async function RepuestosPendientesPage({
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Repuesto</th>
+                    <th className="px-4 py-2.5 text-center font-medium text-gray-400 text-xs">Listo despacho</th>
                     <th className="px-4 py-2.5 text-center font-medium text-gray-400 text-xs">Encargado</th>
                     <th className="px-4 py-2.5"></th>
                   </tr>
@@ -221,6 +233,15 @@ export default async function RepuestosPendientesPage({
                       <td className="px-4 py-3">
                         <div className="font-medium">{r.nombre_repuesto}</div>
                         <div className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <ListoDespachoToggle
+                          repuestoId={r.id}
+                          ordenId={orden.id}
+                          ordenNumero={orden.numero_orden}
+                          inicial={r.listo_despacho ?? false}
+                          editable={puedeMarcarListo}
+                        />
                       </td>
                       <td className="px-4 py-3 text-center">
                         <EncargadoToggle
