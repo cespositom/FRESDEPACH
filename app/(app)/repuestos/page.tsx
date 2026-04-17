@@ -223,7 +223,7 @@ export default async function RepuestosPendientesPage({
                   <tr className="border-b border-gray-100">
                     <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Repuesto</th>
                     <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs">Encargado</th>
-                    <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs pr-5">Listo</th>
+                    <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs pr-5">Recepcionado Despacho</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">

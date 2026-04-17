@@ -27,27 +27,18 @@ export default function EncargadoToggle({
     setLoading(false)
   }
 
-  if (!editable) {
-    return (
-      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-        valor ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-400'
-      }`}>
-        {valor ? 'Sí' : 'No'}
-      </span>
-    )
-  }
-
   return (
     <button
-      onClick={toggle}
+      onClick={editable ? toggle : undefined}
       disabled={loading}
-      className={`text-xs font-semibold px-3 py-1 rounded-full border transition disabled:opacity-50 ${
-        valor
-          ? 'bg-green-500 text-white border-green-500 hover:bg-green-600'
-          : 'bg-white text-gray-400 border-gray-300 hover:border-green-400 hover:text-green-600'
-      }`}
+      className={`w-7 h-7 rounded-md border-2 transition font-bold text-xs inline-flex items-center justify-center
+        ${valor
+          ? 'bg-green-500 border-green-500 text-white'
+          : 'border-gray-300 text-gray-300 hover:border-green-400'}
+        ${!editable ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
+        disabled:opacity-50`}
     >
-      {loading ? '...' : valor ? 'Sí' : 'No'}
+      {loading ? '·' : valor ? '✓' : ''}
     </button>
   )
 }
