@@ -1,5 +1,6 @@
 import { getPerfil, createServerSupabase } from '@/lib/server'
 import Link from 'next/link'
+import EncargadoToggle from './EncargadoToggle'
 
 export default async function RepuestosPendientesPage({
   searchParams,
@@ -15,7 +16,7 @@ export default async function RepuestosPendientesPage({
   const { data: repuestos } = await (supabase as any)
     .from('repuestos_orden')
     .select(`
-      id, nombre_repuesto, codigo_repuesto, cantidad,
+      id, nombre_repuesto, codigo_repuesto, cantidad, encargado,
       orden:ordenes_con_vencimiento (
         id, numero_orden, numero_siniestro, dias_restantes,
         ejecutivo_id, ejecutivo_nombre, estado
@@ -166,6 +167,11 @@ export default async function RepuestosPendientesPage({
                 <span className={`text-xs font-semibold ${diasColor(r.orden.dias_restantes)}`}>
                   {diasLabel(r.orden.dias_restantes)}
                 </span>
+                <EncargadoToggle
+                  repuestoId={r.id}
+                  inicial={r.encargado ?? false}
+                  editable={esAdminSup}
+                />
                 <Link href={`/ordenes/${r.orden.id}`} className="text-blue-600 text-xs font-medium">Ver →</Link>
               </div>
             </div>
@@ -187,6 +193,7 @@ export default async function RepuestosPendientesPage({
                 <th className="px-4 py-3 text-left font-medium text-gray-500">N° Orden</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Siniestro</th>
                 {esAdminSup && <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>}
+                <th className="px-4 py-3 text-center font-medium text-gray-500">Encargado</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -204,6 +211,13 @@ export default async function RepuestosPendientesPage({
                   {esAdminSup && (
                     <td className="px-4 py-3 text-gray-500 text-xs">{r.orden.ejecutivo_nombre ?? '—'}</td>
                   )}
+                  <td className="px-4 py-3 text-center">
+                    <EncargadoToggle
+                      repuestoId={r.id}
+                      inicial={r.encargado ?? false}
+                      editable={esAdminSup}
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <Link href={`/ordenes/${r.orden.id}`}
                       className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
@@ -214,7 +228,7 @@ export default async function RepuestosPendientesPage({
               ))}
               {lista.length === 0 && (
                 <tr>
-                  <td colSpan={esAdminSup ? 8 : 7} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={esAdminSup ? 9 : 8} className="px-4 py-10 text-center text-gray-400">
                     No hay repuestos pendientes
                   </td>
                 </tr>
