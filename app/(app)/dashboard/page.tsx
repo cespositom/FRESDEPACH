@@ -96,8 +96,9 @@ export default async function DashboardPage() {
         por2d:      ords.filter((o: any) => o.dias_restantes >= 0 && o.dias_restantes <= 2 && !o.fecha_despacho).length,
         pendientes: (repsPendientes ?? []).filter((r: any) => r.orden?.ejecutivo_id === ej.id).length,
         totalMes:   (ordenesMes ?? []).filter((o: any) => o.ejecutivo_id === ej.id).length,
+        totalOrdenes: ords.length,
       }
-    })
+    }).filter((ej: any) => ej.totalOrdenes > 0 || ej.totalMes > 0)
   }
 
   return (
