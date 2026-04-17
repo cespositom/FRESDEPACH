@@ -170,21 +170,21 @@ export default async function RepuestosPendientesPage({
           <div key={orden.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
 
             {/* Header del grupo */}
-            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between gap-3 flex-wrap">
-              <div>
-                <span className="font-bold text-gray-900">{orden.patente}</span>
-                <span className="text-gray-500 text-sm ml-2">{orden.marca} {orden.modelo}</span>
-                <span className="text-xs text-gray-400 ml-3">Orden {orden.numero_orden}</span>
+            <div className="px-5 py-3 bg-blue-600 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-bold text-white">{orden.patente}</span>
+                <span className="text-blue-100 text-sm">{orden.marca} {orden.modelo}</span>
+                <span className="text-xs text-blue-200 bg-white/10 px-2 py-0.5 rounded-full">Orden {orden.numero_orden}</span>
                 {esAdminSup && orden.ejecutivo_nombre && (
-                  <span className="text-xs text-gray-400 ml-3">· {orden.ejecutivo_nombre}</span>
+                  <span className="text-xs text-blue-200">· {orden.ejecutivo_nombre}</span>
                 )}
               </div>
               <div className="flex items-center gap-3">
-                <span className={`text-sm font-semibold ${diasColor(orden.dias_restantes)}`}>
+                <span className={`text-sm font-semibold bg-white/20 text-white px-3 py-0.5 rounded-full ${diasColor(orden.dias_restantes).replace('text-', 'text-white ')}`}>
                   {diasLabel(orden.dias_restantes)}
                 </span>
                 <Link href={`/ordenes/${orden.id}`}
-                  className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
+                  className="text-white/80 hover:text-white text-xs font-medium whitespace-nowrap">
                   Ver orden →
                 </Link>
               </div>
@@ -222,8 +222,8 @@ export default async function RepuestosPendientesPage({
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Repuesto</th>
-                    <th className="px-4 py-2.5 text-center font-medium text-gray-400 text-xs">Encargado</th>
-                    <th className="px-4 py-2.5 text-center font-medium text-gray-400 text-xs">Listo despacho</th>
+                    <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs">Encargado</th>
+                    <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs pr-5">Listo</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -233,14 +233,14 @@ export default async function RepuestosPendientesPage({
                         <div className="font-medium">{r.nombre_repuesto}</div>
                         <div className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</div>
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3 text-right">
                         <EncargadoToggle
                           repuestoId={r.id}
                           inicial={r.encargado ?? false}
                           editable={esAdminSup}
                         />
                       </td>
-                      <td className="px-4 py-3 text-center">
+                      <td className="px-4 py-3 text-right pr-5">
                         <ListoDespachoToggle
                           repuestoId={r.id}
                           ordenId={orden.id}

@@ -67,27 +67,18 @@ export default function ListoDespachoToggle({
     setLoading(false)
   }
 
-  if (!editable) {
-    return (
-      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-        valor ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-400'
-      }`}>
-        {valor ? 'Sí' : 'No'}
-      </span>
-    )
-  }
-
   return (
     <button
-      onClick={toggle}
+      onClick={editable ? toggle : undefined}
       disabled={loading}
-      className={`text-xs font-semibold px-3 py-1 rounded-full border transition disabled:opacity-50 ${
-        valor
-          ? 'bg-blue-500 text-white border-blue-500 hover:bg-blue-600'
-          : 'bg-white text-gray-400 border-gray-300 hover:border-blue-400 hover:text-blue-600'
-      }`}
+      className={`w-7 h-7 rounded-md border-2 transition font-bold text-xs inline-flex items-center justify-center
+        ${valor
+          ? 'bg-blue-500 border-blue-500 text-white'
+          : 'border-gray-300 text-gray-300 hover:border-blue-400'}
+        ${!editable ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}
+        disabled:opacity-50`}
     >
-      {loading ? '...' : valor ? 'Sí' : 'No'}
+      {loading ? '·' : valor ? '✓' : ''}
     </button>
   )
 }
