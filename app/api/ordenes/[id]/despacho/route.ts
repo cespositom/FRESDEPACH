@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const perfil = await getPerfil()
-  if (!perfil || !['admin', 'logistica'].includes(perfil.perfil)) {
+  if (!perfil || !['admin', 'supervisor', 'logistica'].includes(perfil.perfil)) {
     return NextResponse.json({ error: 'Sin permisos' }, { status: 403 })
   }
 

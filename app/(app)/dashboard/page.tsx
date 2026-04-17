@@ -44,8 +44,9 @@ export default async function DashboardPage() {
   // Repuestos pendientes: solo de órdenes asignadas al ejecutivo si corresponde
   let qPendientes = (supabase as any)
     .from('repuestos_orden')
-    .select('id, orden:ordenes!inner(ejecutivo_id)', { count: 'exact', head: true })
+    .select('id, orden:ordenes!inner(ejecutivo_id, estado)', { count: 'exact', head: true })
     .eq('listo_despacho', false)
+    .neq('orden.estado', 'Anulada')
 
   if (esEjecutivo) {
     qVencidas    = qVencidas.eq('ejecutivo_id', perfil!.id)
@@ -83,7 +84,7 @@ export default async function DashboardPage() {
       (supabase as any).from('perfiles').select('id, nombre').eq('perfil', 'ejecutivo').order('nombre'),
       (supabase as any).from('ordenes_con_vencimiento').select('ejecutivo_id, dias_restantes, fecha_despacho').neq('estado', 'Anulada'),
       (supabase as any).from('ordenes').select('ejecutivo_id').neq('estado', 'Anulada').gte('created_at', startOfMonth.toISOString()),
-      (supabase as any).from('repuestos_orden').select('id, orden:ordenes!inner(ejecutivo_id)').eq('listo_despacho', false),
+      (supabase as any).from('repuestos_orden').select('id, orden:ordenes!inner(ejecutivo_id, estado)').eq('listo_despacho', false).neq('orden.estado', 'Anulada'),
     ])
 
     resumenEjecutivos = (ejecutivos ?? []).map((ej: any) => {
