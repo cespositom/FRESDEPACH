@@ -157,8 +157,8 @@ export default async function RepuestosPendientesPage({
             <div key={r.id} className="px-4 py-3 flex items-start justify-between gap-2">
               <div className="space-y-0.5 min-w-0">
                 <p className="font-medium text-sm text-gray-900 truncate">{r.nombre_repuesto}</p>
-                <p className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'} · x{r.cantidad}</p>
-                <p className="text-xs text-gray-500">Orden {r.orden.numero_orden} · {r.orden.numero_siniestro ?? '—'}</p>
+                <p className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</p>
+                <p className="text-xs text-gray-500">Orden {r.orden.numero_orden}</p>
                 {esAdminSup && r.orden.ejecutivo_nombre && (
                   <p className="text-xs text-gray-400">{r.orden.ejecutivo_nombre}</p>
                 )}
@@ -189,9 +189,7 @@ export default async function RepuestosPendientesPage({
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Días venc.</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Repuesto</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Código</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Cant.</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">N° Orden</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Siniestro</th>
                 {esAdminSup && <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>}
                 <th className="px-4 py-3 text-center font-medium text-gray-500">Encargado</th>
                 <th className="px-4 py-3"></th>
@@ -205,9 +203,7 @@ export default async function RepuestosPendientesPage({
                   </td>
                   <td className="px-4 py-3 font-medium">{r.nombre_repuesto}</td>
                   <td className="px-4 py-3 text-gray-400 text-xs">{r.codigo_repuesto ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-600">{r.cantidad}</td>
                   <td className="px-4 py-3 font-medium text-gray-800">{r.orden.numero_orden}</td>
-                  <td className="px-4 py-3 text-gray-500 text-xs">{r.orden.numero_siniestro ?? '—'}</td>
                   {esAdminSup && (
                     <td className="px-4 py-3 text-gray-500 text-xs">{r.orden.ejecutivo_nombre ?? '—'}</td>
                   )}
@@ -228,7 +224,7 @@ export default async function RepuestosPendientesPage({
               ))}
               {lista.length === 0 && (
                 <tr>
-                  <td colSpan={esAdminSup ? 9 : 8} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={esAdminSup ? 7 : 6} className="px-4 py-10 text-center text-gray-400">
                     No hay repuestos pendientes
                   </td>
                 </tr>
