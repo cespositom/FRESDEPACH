@@ -199,17 +199,17 @@ export default async function RepuestosPendientesPage({
                     <p className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    <EncargadoToggle
+                      repuestoId={r.id}
+                      inicial={r.encargado ?? false}
+                      editable={esAdminSup}
+                    />
                     <ListoDespachoToggle
                       repuestoId={r.id}
                       ordenId={orden.id}
                       ordenNumero={orden.numero_orden}
                       inicial={r.listo_despacho ?? false}
                       editable={puedeMarcarListo}
-                    />
-                    <EncargadoToggle
-                      repuestoId={r.id}
-                      inicial={r.encargado ?? false}
-                      editable={esAdminSup}
                     />
                   </div>
                 </div>
@@ -222,9 +222,8 @@ export default async function RepuestosPendientesPage({
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Repuesto</th>
-                    <th className="px-4 py-2.5 text-center font-medium text-gray-400 text-xs">Listo despacho</th>
                     <th className="px-4 py-2.5 text-center font-medium text-gray-400 text-xs">Encargado</th>
-                    <th className="px-4 py-2.5"></th>
+                    <th className="px-4 py-2.5 text-center font-medium text-gray-400 text-xs">Listo despacho</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -235,6 +234,13 @@ export default async function RepuestosPendientesPage({
                         <div className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</div>
                       </td>
                       <td className="px-4 py-3 text-center">
+                        <EncargadoToggle
+                          repuestoId={r.id}
+                          inicial={r.encargado ?? false}
+                          editable={esAdminSup}
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-center">
                         <ListoDespachoToggle
                           repuestoId={r.id}
                           ordenId={orden.id}
@@ -242,19 +248,6 @@ export default async function RepuestosPendientesPage({
                           inicial={r.listo_despacho ?? false}
                           editable={puedeMarcarListo}
                         />
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <EncargadoToggle
-                          repuestoId={r.id}
-                          inicial={r.encargado ?? false}
-                          editable={esAdminSup}
-                        />
-                      </td>
-                      <td className="px-4 py-3">
-                        <Link href={`/ordenes/${orden.id}`}
-                          className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
-                          Ver →
-                        </Link>
                       </td>
                     </tr>
                   ))}
