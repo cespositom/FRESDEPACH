@@ -214,7 +214,10 @@ export default async function DashboardPage() {
               <div className="text-xs text-gray-500">{o.patente} · {o.marca} {o.modelo}</div>
               <div className="text-xs text-gray-400">{o.taller_nombre}</div>
               <div className="flex items-center justify-between pt-1">
-                <span className="text-xs text-gray-500">{o.repuestos_listos}/{o.total_repuestos} listos</span>
+                {Number(o.repuestos_listos) >= Number(o.total_repuestos) && Number(o.total_repuestos) > 0
+                  ? <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Pendiente despacho</span>
+                  : <span className="text-xs font-semibold text-orange-500 uppercase tracking-wide">Repuestos pendientes</span>
+                }
                 <Link href={`/ordenes/${o.id}`} className="text-blue-600 text-xs font-medium">Ver →</Link>
               </div>
             </div>
@@ -232,7 +235,7 @@ export default async function DashboardPage() {
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Orden</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Vehículo</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Repuestos</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Días</th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -250,11 +253,10 @@ export default async function DashboardPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-600">{o.ejecutivo_nombre ?? <span className="text-gray-300">—</span>}</td>
                   <td className="px-4 py-3">
-                    <span className="text-xs">{o.repuestos_listos}/{o.total_repuestos} listos</span>
-                    <div className="mt-1 w-24 bg-gray-200 rounded-full h-1.5">
-                      <div className="bg-blue-500 h-1.5 rounded-full"
-                        style={{ width: `${o.total_repuestos > 0 ? (o.repuestos_listos / o.total_repuestos * 100) : 0}%` }} />
-                    </div>
+                    {Number(o.repuestos_listos) >= Number(o.total_repuestos) && Number(o.total_repuestos) > 0
+                      ? <span className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Pendiente despacho</span>
+                      : <span className="text-xs font-semibold text-orange-500 uppercase tracking-wide">Repuestos pendientes</span>
+                    }
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${badge(o.dias_restantes ?? 999)}`}>
