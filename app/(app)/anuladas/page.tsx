@@ -86,7 +86,6 @@ export default async function AnuladasPage({
                 <th className="px-4 py-3 text-left font-medium text-gray-500">N° Orden</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Siniestro</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Fecha</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Aseguradora</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Vehículo</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Taller</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>
@@ -96,10 +95,12 @@ export default async function AnuladasPage({
             <tbody className="divide-y divide-gray-50">
               {(ordenes ?? []).map((o: any) => (
                 <tr key={o.id} className="hover:bg-gray-50 transition">
-                  <td className="px-4 py-3 font-medium">{o.numero_orden}</td>
+                  <td className="px-4 py-3">
+                    <div className="font-medium">{o.numero_orden}</div>
+                    <div className="text-xs text-gray-400">{o.aseguradora_nombre}</div>
+                  </td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{o.numero_siniestro ?? '—'}</td>
                   <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{new Date(o.fecha).toLocaleDateString('es-CL')}</td>
-                  <td className="px-4 py-3 text-gray-600 max-w-[130px] truncate">{o.aseguradora_nombre}</td>
                   <td className="px-4 py-3">
                     <div className="font-medium">{o.patente}</div>
                     <div className="text-xs text-gray-400">{o.marca} {o.modelo}</div>
@@ -116,7 +117,7 @@ export default async function AnuladasPage({
               ))}
               {(!ordenes || ordenes.length === 0) && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-10 text-center text-gray-400">
+                  <td colSpan={7} className="px-4 py-10 text-center text-gray-400">
                     No hay órdenes anuladas
                   </td>
                 </tr>
