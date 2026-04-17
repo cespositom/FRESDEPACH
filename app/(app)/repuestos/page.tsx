@@ -18,7 +18,7 @@ export default async function RepuestosPendientesPage({
   const { data: repuestos } = await (supabase as any)
     .from('repuestos_orden')
     .select(`
-      id, nombre_repuesto, codigo_repuesto, cantidad, encargado, listo_despacho,
+      id, nombre_repuesto, codigo_repuesto, cantidad, encargado, listo_despacho, calidad,
       orden:ordenes_con_vencimiento (
         id, numero_orden, numero_siniestro, dias_restantes,
         ejecutivo_id, ejecutivo_nombre, estado,
@@ -197,6 +197,9 @@ export default async function RepuestosPendientesPage({
                   <div className="space-y-0.5 min-w-0">
                     <p className="font-medium text-sm text-gray-900 truncate">{r.nombre_repuesto}</p>
                     <p className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</p>
+                    <span className={`inline-block text-xs px-2 py-0.5 rounded-full ${r.calidad === 'ORIGINAL' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
+                      {r.calidad}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <EncargadoToggle
@@ -222,6 +225,7 @@ export default async function RepuestosPendientesPage({
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs w-full">Repuesto</th>
+                    <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs w-px whitespace-nowrap">Calidad</th>
                     <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs w-px whitespace-nowrap">Encargado</th>
                     <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs w-px whitespace-nowrap pr-5">Recepcionado</th>
                   </tr>
@@ -232,6 +236,11 @@ export default async function RepuestosPendientesPage({
                       <td className="px-4 py-3">
                         <div className="font-medium">{r.nombre_repuesto}</div>
                         <div className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</div>
+                      </td>
+                      <td className="px-4 py-3 text-right w-px whitespace-nowrap">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${r.calidad === 'ORIGINAL' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
+                          {r.calidad}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-right w-px whitespace-nowrap">
                         <EncargadoToggle
