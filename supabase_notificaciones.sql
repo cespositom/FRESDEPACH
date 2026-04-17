@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS notificaciones (
   usuario_id    uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   tipo          text NOT NULL CHECK (tipo IN ('orden_asignada', 'listo_despacho')),
   mensaje       text NOT NULL,
-  orden_id      uuid REFERENCES ordenes(id) ON DELETE CASCADE,
+  orden_id      bigint REFERENCES ordenes(id) ON DELETE CASCADE,
   orden_numero  text,
   leida         boolean DEFAULT false,
   created_at    timestamptz DEFAULT now()
