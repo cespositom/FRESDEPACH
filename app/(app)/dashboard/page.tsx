@@ -81,7 +81,7 @@ export default async function DashboardPage() {
       { data: ordenesMes },
       { data: repsPendientes },
     ] = await Promise.all([
-      (supabase as any).from('perfiles').select('id, nombre').eq('perfil', 'ejecutivo').order('nombre'),
+      (supabase as any).from('perfiles').select('id, nombre').eq('activo', true).order('nombre'),
       (supabase as any).from('ordenes_con_vencimiento').select('ejecutivo_id, dias_restantes, fecha_despacho').neq('estado', 'Anulada'),
       (supabase as any).from('ordenes').select('ejecutivo_id').neq('estado', 'Anulada').gte('created_at', startOfMonth.toISOString()),
       (supabase as any).from('repuestos_orden').select('id, orden:ordenes!inner(ejecutivo_id, estado)').eq('listo_despacho', false).neq('orden.estado', 'Anulada'),
@@ -136,8 +136,8 @@ export default async function DashboardPage() {
       {esAdminOrSup && resumenEjecutivos.length > 0 && (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100">
-            <h2 className="font-semibold text-gray-900">Resumen por ejecutivo</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Mes actual · órdenes y repuestos por ejecutivo</p>
+            <h2 className="font-semibold text-gray-900">Resumen por usuario</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Mes actual · órdenes y repuestos por usuario</p>
           </div>
 
           {/* Mobile: cards */}
@@ -164,7 +164,7 @@ export default async function DashboardPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-100">
-                  <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>
+                  <th className="px-4 py-3 text-left font-medium text-gray-500">Usuario</th>
                   <th className="px-4 py-3 text-center font-medium text-orange-500">Vencen en 2d</th>
                   <th className="px-4 py-3 text-center font-medium text-red-500">Vencidas</th>
                   <th className="px-4 py-3 text-center font-medium text-yellow-600">Rep. pendientes</th>
