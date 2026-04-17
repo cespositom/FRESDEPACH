@@ -221,9 +221,9 @@ export default async function RepuestosPendientesPage({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Repuesto</th>
-                    <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs">Encargado</th>
-                    <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs pr-5">Recepcionado</th>
+                    <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs w-full">Repuesto</th>
+                    <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs w-px whitespace-nowrap">Encargado</th>
+                    <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs w-px whitespace-nowrap pr-5">Recepcionado</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -233,14 +233,14 @@ export default async function RepuestosPendientesPage({
                         <div className="font-medium">{r.nombre_repuesto}</div>
                         <div className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</div>
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right w-px whitespace-nowrap">
                         <EncargadoToggle
                           repuestoId={r.id}
                           inicial={r.encargado ?? false}
                           editable={esAdminSup}
                         />
                       </td>
-                      <td className="px-4 py-3 text-right pr-5">
+                      <td className="px-4 py-3 text-right w-px whitespace-nowrap pr-5">
                         <ListoDespachoToggle
                           repuestoId={r.id}
                           ordenId={orden.id}
