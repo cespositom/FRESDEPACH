@@ -28,7 +28,7 @@ export default async function DashboardPage() {
     .lte('dias_restantes', 30)
     .is('fecha_despacho', null)
     .order('dias_restantes', { ascending: true })
-    .limit(20)
+    .limit(50)
 
   if (esEjecutivo) {
     query = query.eq('ejecutivo_id', perfil!.id)
