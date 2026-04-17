@@ -62,6 +62,16 @@ export default async function RepuestosPendientesPage({
 
   lista.sort((a: any, b: any) => (a.orden.dias_restantes ?? 999) - (b.orden.dias_restantes ?? 999))
 
+  // Agrupar por orden (preservando el orden de urgencia)
+  const gruposMap = new Map<number, { orden: any; items: any[] }>()
+  for (const r of lista) {
+    if (!gruposMap.has(r.orden.id)) {
+      gruposMap.set(r.orden.id, { orden: r.orden, items: [] })
+    }
+    gruposMap.get(r.orden.id)!.items.push(r)
+  }
+  const grupos = Array.from(gruposMap.values())
+
   function diasColor(dias: number | null) {
     if (dias === null) return 'text-gray-400'
     if (dias < 0)  return 'text-red-600 font-semibold'
@@ -77,7 +87,6 @@ export default async function RepuestosPendientesPage({
     return `${dias}d`
   }
 
-  // Construir query string para limpiar filtros
   function quitarFiltro(key: string) {
     const p = new URLSearchParams()
     if (key !== 'codigo'    && params.codigo)    p.set('codigo',    params.codigo)
@@ -92,7 +101,7 @@ export default async function RepuestosPendientesPage({
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Repuestos pendientes</h1>
         <p className="text-gray-500 text-sm mt-1">
-          {lista.length} repuestos sin marcar como listo · ordenados por urgencia
+          {lista.length} repuestos · {grupos.length} {grupos.length === 1 ? 'vehículo' : 'vehículos'} · ordenados por urgencia
         </p>
       </div>
 
@@ -123,10 +132,7 @@ export default async function RepuestosPendientesPage({
         </button>
 
         {(params.codigo || params.ejecutivo) && (
-          <Link
-            href="/repuestos"
-            className="px-4 py-2 rounded-lg text-sm border border-gray-300 hover:bg-gray-50"
-          >
+          <Link href="/repuestos" className="px-4 py-2 rounded-lg text-sm border border-gray-300 hover:bg-gray-50">
             Limpiar
           </Link>
         )}
@@ -150,96 +156,93 @@ export default async function RepuestosPendientesPage({
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      {grupos.length === 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 px-4 py-10 text-center text-gray-400 text-sm">
+          No hay repuestos pendientes
+        </div>
+      )}
 
-        {/* Mobile: cards */}
-        <div className="md:hidden divide-y divide-gray-100">
-          {lista.map((r: any) => (
-            <div key={r.id} className="px-4 py-3 flex items-start justify-between gap-2">
-              <div className="space-y-0.5 min-w-0">
-                <p className="font-medium text-sm text-gray-900 truncate">{r.nombre_repuesto}</p>
-                <p className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</p>
-                <p className="text-xs text-gray-500">{r.orden.patente} · {r.orden.marca} {r.orden.modelo}</p>
-                <p className="text-xs text-gray-500">Orden {r.orden.numero_orden}</p>
-                {esAdminSup && r.orden.ejecutivo_nombre && (
-                  <p className="text-xs text-gray-400">{r.orden.ejecutivo_nombre}</p>
+      {/* Grupos por vehículo */}
+      <div className="space-y-4">
+        {grupos.map(({ orden, items }) => (
+          <div key={orden.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+
+            {/* Header del grupo */}
+            <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <span className="font-bold text-gray-900">{orden.patente}</span>
+                <span className="text-gray-500 text-sm ml-2">{orden.marca} {orden.modelo}</span>
+                <span className="text-xs text-gray-400 ml-3">Orden {orden.numero_orden}</span>
+                {esAdminSup && orden.ejecutivo_nombre && (
+                  <span className="text-xs text-gray-400 ml-3">· {orden.ejecutivo_nombre}</span>
                 )}
               </div>
-              <div className="flex flex-col items-end gap-1 shrink-0">
-                <span className={`text-xs font-semibold ${diasColor(r.orden.dias_restantes)}`}>
-                  {diasLabel(r.orden.dias_restantes)}
+              <div className="flex items-center gap-3">
+                <span className={`text-sm font-semibold ${diasColor(orden.dias_restantes)}`}>
+                  {diasLabel(orden.dias_restantes)}
                 </span>
-                <EncargadoToggle
-                  repuestoId={r.id}
-                  inicial={r.encargado ?? false}
-                  editable={esAdminSup}
-                />
-                <Link href={`/ordenes/${r.orden.id}`} className="text-blue-600 text-xs font-medium">Ver →</Link>
+                <Link href={`/ordenes/${orden.id}`}
+                  className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
+                  Ver orden →
+                </Link>
               </div>
             </div>
-          ))}
-          {lista.length === 0 && (
-            <p className="px-4 py-10 text-center text-gray-400 text-sm">No hay repuestos pendientes</p>
-          )}
-        </div>
 
-        {/* Desktop: tabla */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Días venc.</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Repuesto</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Vehículo</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">N° Orden</th>
-                {esAdminSup && <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>}
-                <th className="px-4 py-3 text-center font-medium text-gray-500">Encargado</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {lista.map((r: any) => (
-                <tr key={r.id} className="hover:bg-gray-50 transition">
-                  <td className={`px-4 py-3 text-sm whitespace-nowrap ${diasColor(r.orden.dias_restantes)}`}>
-                    {diasLabel(r.orden.dias_restantes)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{r.nombre_repuesto}</div>
-                    <div className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{r.orden.patente}</div>
-                    <div className="text-xs text-gray-400">{r.orden.marca} {r.orden.modelo}</div>
-                  </td>
-                  <td className="px-4 py-3 font-medium text-gray-800">{r.orden.numero_orden}</td>
-                  {esAdminSup && (
-                    <td className="px-4 py-3 text-gray-500 text-xs">{r.orden.ejecutivo_nombre ?? '—'}</td>
-                  )}
-                  <td className="px-4 py-3 text-center">
-                    <EncargadoToggle
-                      repuestoId={r.id}
-                      inicial={r.encargado ?? false}
-                      editable={esAdminSup}
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link href={`/ordenes/${r.orden.id}`}
-                      className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
-                      Ver →
-                    </Link>
-                  </td>
-                </tr>
+            {/* Mobile: cards */}
+            <div className="md:hidden divide-y divide-gray-100">
+              {items.map((r: any) => (
+                <div key={r.id} className="px-4 py-3 flex items-center justify-between gap-2">
+                  <div className="space-y-0.5 min-w-0">
+                    <p className="font-medium text-sm text-gray-900 truncate">{r.nombre_repuesto}</p>
+                    <p className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</p>
+                  </div>
+                  <EncargadoToggle
+                    repuestoId={r.id}
+                    inicial={r.encargado ?? false}
+                    editable={esAdminSup}
+                  />
+                </div>
               ))}
-              {lista.length === 0 && (
-                <tr>
-                  <td colSpan={esAdminSup ? 7 : 6} className="px-4 py-10 text-center text-gray-400">
-                    No hay repuestos pendientes
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            </div>
+
+            {/* Desktop: tabla */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100">
+                    <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Repuesto</th>
+                    <th className="px-4 py-2.5 text-center font-medium text-gray-400 text-xs">Encargado</th>
+                    <th className="px-4 py-2.5"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {items.map((r: any) => (
+                    <tr key={r.id} className="hover:bg-gray-50 transition">
+                      <td className="px-4 py-3">
+                        <div className="font-medium">{r.nombre_repuesto}</div>
+                        <div className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <EncargadoToggle
+                          repuestoId={r.id}
+                          inicial={r.encargado ?? false}
+                          editable={esAdminSup}
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <Link href={`/ordenes/${orden.id}`}
+                          className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
+                          Ver →
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        ))}
       </div>
     </div>
   )
