@@ -19,7 +19,8 @@ export default async function RepuestosPendientesPage({
       id, nombre_repuesto, codigo_repuesto, cantidad, encargado,
       orden:ordenes_con_vencimiento (
         id, numero_orden, numero_siniestro, dias_restantes,
-        ejecutivo_id, ejecutivo_nombre, estado
+        ejecutivo_id, ejecutivo_nombre, estado,
+        patente, marca, modelo
       )
     `)
     .eq('listo_despacho', false)
@@ -158,6 +159,7 @@ export default async function RepuestosPendientesPage({
               <div className="space-y-0.5 min-w-0">
                 <p className="font-medium text-sm text-gray-900 truncate">{r.nombre_repuesto}</p>
                 <p className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</p>
+                <p className="text-xs text-gray-500">{r.orden.patente} · {r.orden.marca} {r.orden.modelo}</p>
                 <p className="text-xs text-gray-500">Orden {r.orden.numero_orden}</p>
                 {esAdminSup && r.orden.ejecutivo_nombre && (
                   <p className="text-xs text-gray-400">{r.orden.ejecutivo_nombre}</p>
@@ -188,7 +190,7 @@ export default async function RepuestosPendientesPage({
               <tr className="bg-gray-50 border-b border-gray-100">
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Días venc.</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Repuesto</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">Código</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">Vehículo</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">N° Orden</th>
                 {esAdminSup && <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>}
                 <th className="px-4 py-3 text-center font-medium text-gray-500">Encargado</th>
@@ -201,8 +203,14 @@ export default async function RepuestosPendientesPage({
                   <td className={`px-4 py-3 text-sm whitespace-nowrap ${diasColor(r.orden.dias_restantes)}`}>
                     {diasLabel(r.orden.dias_restantes)}
                   </td>
-                  <td className="px-4 py-3 font-medium">{r.nombre_repuesto}</td>
-                  <td className="px-4 py-3 text-gray-400 text-xs">{r.codigo_repuesto ?? '—'}</td>
+                  <td className="px-4 py-3">
+                    <div className="font-medium">{r.nombre_repuesto}</div>
+                    <div className="text-xs text-gray-400">{r.codigo_repuesto ?? '—'}</div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="font-medium">{r.orden.patente}</div>
+                    <div className="text-xs text-gray-400">{r.orden.marca} {r.orden.modelo}</div>
+                  </td>
                   <td className="px-4 py-3 font-medium text-gray-800">{r.orden.numero_orden}</td>
                   {esAdminSup && (
                     <td className="px-4 py-3 text-gray-500 text-xs">{r.orden.ejecutivo_nombre ?? '—'}</td>

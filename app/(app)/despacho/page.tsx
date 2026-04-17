@@ -190,7 +190,6 @@ export default async function DespachoPorComunaPage({
                             <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Siniestro</th>
                             <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Vehículo</th>
                             {!esEjec && <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Taller</th>}
-                            {!esEjec && <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Dirección</th>}
                             <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs">Repuestos</th>
                             <th className="px-4 py-2.5"></th>
                           </tr>
@@ -208,11 +207,9 @@ export default async function DespachoPorComunaPage({
                                 <div className="text-xs text-gray-400">{o.marca} {o.modelo}</div>
                               </td>
                               {!esEjec && (
-                                <td className="px-4 py-3 text-gray-600 max-w-[150px] truncate">{o.taller_nombre}</td>
-                              )}
-                              {!esEjec && (
-                                <td className="px-4 py-3 text-gray-500 text-xs max-w-[150px] truncate">
-                                  {o.taller_direccion ?? '—'}
+                                <td className="px-4 py-3 max-w-[180px]">
+                                  <div className="text-gray-600 truncate">{o.taller_nombre}</div>
+                                  <div className="text-xs text-gray-400 truncate">{o.taller_direccion ?? '—'}</div>
                                 </td>
                               )}
                               <td className="px-4 py-3">
