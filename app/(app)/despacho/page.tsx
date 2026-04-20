@@ -6,7 +6,7 @@ import FiltroDespacho from './FiltroDespacho'
 export default async function DespachoPorComunaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ region?: string; comuna?: string }>
+  searchParams: Promise<{ region?: string; comuna?: string; orden?: string }>
 }) {
   const params   = await searchParams
   const perfil   = await getPerfil()
@@ -63,17 +63,41 @@ export default async function DespachoPorComunaPage({
     new Set(todasRegiones.flatMap(r => Object.keys(porRegionFull[r])))
   ).sort()
 
+  // Aplicar filtro de número de orden
+  const filtroOrden  = params.orden?.trim() ?? ''
+  const ordenesFiltradas = filtroOrden
+    ? ordenes.filter((o: any) =>
+        String(o.numero_orden ?? '').toLowerCase().includes(filtroOrden.toLowerCase())
+      )
+    : ordenes
+
+  // Agrupar con filtro de orden aplicado
+  const porRegionConOrden: Record<string, Record<string, any[]>> = {}
+  ordenesFiltradas.forEach((o: any) => {
+    const taller  = tallerMap[o.taller_id]
+    const region  = taller?.region  ?? 'Sin región'
+    const comuna  = taller?.comuna  ?? 'Sin comuna'
+    if (!porRegionConOrden[region]) porRegionConOrden[region] = {}
+    if (!porRegionConOrden[region][comuna]) porRegionConOrden[region][comuna] = []
+    porRegionConOrden[region][comuna].push({
+      ...o,
+      taller_comuna:    comuna,
+      taller_region:    region,
+      taller_direccion: taller?.direccion ?? null,
+    })
+  })
+
   // Aplicar filtro de región / comuna
   const filtroRegion = params.region ?? ''
   const filtroComuna = params.comuna ?? ''
 
   const porRegion: Record<string, Record<string, any[]>> = {}
-  for (const region of todasRegiones) {
+  for (const region of Object.keys(porRegionConOrden).sort()) {
     if (filtroRegion && region !== filtroRegion) continue
-    for (const comuna of Object.keys(porRegionFull[region])) {
+    for (const comuna of Object.keys(porRegionConOrden[region])) {
       if (filtroComuna && comuna !== filtroComuna) continue
       if (!porRegion[region]) porRegion[region] = {}
-      porRegion[region][comuna] = porRegionFull[region][comuna]
+      porRegion[region][comuna] = porRegionConOrden[region][comuna]
     }
   }
 

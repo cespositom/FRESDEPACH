@@ -18,7 +18,8 @@ export default function BCIUpload() {
   const inputRef = useRef<HTMLInputElement>(null)
 
   function validar(file: File): string | null {
-    if (!file.name.toLowerCase().endsWith('.pdf')) return 'Solo se aceptan archivos PDF'
+    const esPdf = file.name.toLowerCase().endsWith('.pdf') && file.type === 'application/pdf'
+    if (!esPdf) return 'El archivo no corresponde'
     if (file.size > 10 * 1024 * 1024) return 'El archivo no puede superar 10 MB'
     return null
   }
