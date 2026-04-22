@@ -7,7 +7,7 @@ import ProveedorSelect from './ProveedorSelect'
 export default async function RepuestosPendientesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ codigo?: string; ejecutivo?: string }>
+  searchParams: Promise<{ codigo?: string; ejecutivo?: string; orden?: string }>
 }) {
   const params  = await searchParams
   const perfil  = await getPerfil()
@@ -65,6 +65,10 @@ export default async function RepuestosPendientesPage({
   if (esAdminSup && params.ejecutivo) {
     lista = lista.filter((r: any) => r.orden.ejecutivo_id === params.ejecutivo)
   }
+  if (esAdminSup && params.orden) {
+    const q = params.orden.toLowerCase()
+    lista = lista.filter((r: any) => String(r.orden.numero_orden ?? '').toLowerCase().includes(q))
+  }
   if (params.codigo) {
     const q = params.codigo.toLowerCase()
     lista = lista.filter((r: any) => r.codigo_repuesto?.toLowerCase().includes(q))
@@ -101,6 +105,7 @@ export default async function RepuestosPendientesPage({
     const p = new URLSearchParams()
     if (key !== 'codigo'    && params.codigo)    p.set('codigo',    params.codigo)
     if (key !== 'ejecutivo' && params.ejecutivo) p.set('ejecutivo', params.ejecutivo)
+    if (key !== 'orden'     && params.orden)     p.set('orden',     params.orden)
     return `/repuestos${p.size > 0 ? `?${p}` : ''}`
   }
 
@@ -124,6 +129,15 @@ export default async function RepuestosPendientesPage({
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-[180px] max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
+        {esAdminSup && (
+          <input
+            name="orden"
+            defaultValue={params.orden}
+            placeholder="Filtrar por N° orden..."
+            className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-[160px] max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        )}
+
         {esAdminSup && ejecutivos.length > 0 && (
           <select
             name="ejecutivo"
@@ -141,7 +155,7 @@ export default async function RepuestosPendientesPage({
           Buscar
         </button>
 
-        {(params.codigo || params.ejecutivo) && (
+        {(params.codigo || params.ejecutivo || params.orden) && (
           <Link href="/repuestos" className="px-4 py-2 rounded-lg text-sm border border-gray-300 hover:bg-gray-50">
             Limpiar
           </Link>
@@ -149,8 +163,14 @@ export default async function RepuestosPendientesPage({
       </form>
 
       {/* Tags de filtros activos */}
-      {(params.codigo || ejecutivoFiltroNombre) && (
+      {(params.codigo || ejecutivoFiltroNombre || params.orden) && (
         <div className="flex flex-wrap gap-2">
+          {esAdminSup && params.orden && (
+            <span className="flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2.5 py-1 rounded-full">
+              N° Orden: {params.orden}
+              <Link href={quitarFiltro('orden')} className="ml-1 hover:text-green-900">✕</Link>
+            </span>
+          )}
           {params.codigo && (
             <span className="flex items-center gap-1 text-xs bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">
               Código: {params.codigo}
