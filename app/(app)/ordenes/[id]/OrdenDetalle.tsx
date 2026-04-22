@@ -9,11 +9,14 @@ function fmtFecha(fecha: string) {
   return `${d}/${m}/${y}`
 }
 
+const PROVEEDORES = ['ALSACIA', 'REFAX', '4RUEDAS', 'BICIMOTO', 'MANNHEIM', 'OTRO PROVEEDOR'] as const
+
 type Repuesto = {
   id: number; nombre_repuesto: string; codigo_repuesto: string | null
   calidad: string; cantidad: number; dias_despacho: number | null
   precio_unitario: number; precio_embalaje: number; total: number
   listo_despacho: boolean; despachado_ok: boolean
+  proveedor: string | null
 }
 type Perfil = { id: string; nombre: string; perfil: string }
 
@@ -22,6 +25,8 @@ const CAN_DESPACHADO = ['admin', 'supervisor', 'logistica']
 const CAN_ASIGNAR = ['admin', 'supervisor']
 const CAN_GUIA = ['admin', 'supervisor']
 const CAN_REBAJADO = ['admin', 'supervisor', 'ejecutivo']
+const CAN_ELIMINAR_REP = ['admin', 'supervisor']
+const CAN_PROVEEDOR = ['admin', 'supervisor']
 
 export default function OrdenDetalle({
   orden, repuestos, ejecutivos, auditoria, perfil
@@ -41,6 +46,8 @@ export default function OrdenDetalle({
   const [rebajado, setRebajado] = useState<boolean>(orden.rebajado ?? false)
   const [rebajadoLoading, setRebajadoLoading] = useState(false)
   const [accionLoading, setAccionLoading] = useState<'anular' | 'eliminar' | null>(null)
+  const [elimRepLoading, setElimRepLoading] = useState<number | null>(null)
+  const [provLoading, setProvLoading] = useState<number | null>(null)
 
   async function toggleField(rep: Repuesto, field: 'listo_despacho' | 'despachado_ok') {
     setLoading(rep.id)
@@ -154,6 +161,45 @@ export default function OrdenDetalle({
     router.push('/ordenes')
   }
 
+  async function actualizarProveedor(rep: Repuesto, nuevoProveedor: string) {
+    setProvLoading(rep.id)
+    const valor = nuevoProveedor || null
+    const { error } = await supabase
+      .from('repuestos_orden')
+      .update({ proveedor: valor })
+      .eq('id', rep.id)
+    if (!error) {
+      await supabase.from('auditoria').insert({
+        tabla: 'repuestos_orden',
+        registro_id: orden.id,
+        campo: 'proveedor',
+        valor_anterior: rep.proveedor ?? 'Sin proveedor',
+        valor_nuevo: valor ?? 'Sin proveedor',
+        usuario_nombre: perfil.nombre,
+      })
+      setLocalRep(prev => prev.map(r => r.id === rep.id ? { ...r, proveedor: valor } : r))
+    }
+    setProvLoading(null)
+  }
+
+  async function eliminarRepuesto(rep: Repuesto) {
+    if (!confirm(`¿Eliminar el repuesto "${rep.nombre_repuesto}"? Esta acción no se puede deshacer.`)) return
+    setElimRepLoading(rep.id)
+    const { error } = await supabase.from('repuestos_orden').delete().eq('id', rep.id)
+    if (!error) {
+      await supabase.from('auditoria').insert({
+        tabla: 'repuestos_orden',
+        registro_id: orden.id,
+        campo: 'repuesto_eliminado',
+        valor_anterior: `${rep.nombre_repuesto}${rep.codigo_repuesto ? ` (${rep.codigo_repuesto})` : ''}`,
+        valor_nuevo: 'eliminado',
+        usuario_nombre: perfil.nombre,
+      })
+      setLocalRep(prev => prev.filter(r => r.id !== rep.id))
+    }
+    setElimRepLoading(null)
+  }
+
   async function asignarEjecutivo() {
     setEjLoading(true)
     const ejAnterior = orden.ejecutivo_nombre ?? 'Sin asignar'
@@ -184,13 +230,15 @@ export default function OrdenDetalle({
     router.refresh()
   }
 
-  const canListo    = CAN_LISTO.includes(perfil.perfil)
-  const canDespacho = CAN_DESPACHADO.includes(perfil.perfil)
-  const canAsignar  = CAN_ASIGNAR.includes(perfil.perfil)
-  const canGuia     = CAN_GUIA.includes(perfil.perfil)
-  const canObs      = true // todos los perfiles pueden agregar observaciones
-  const canRebajado = CAN_REBAJADO.includes(perfil.perfil)
-  const esAdmin     = perfil.perfil === 'admin'
+  const canListo       = CAN_LISTO.includes(perfil.perfil)
+  const canDespacho    = CAN_DESPACHADO.includes(perfil.perfil)
+  const canAsignar     = CAN_ASIGNAR.includes(perfil.perfil)
+  const canGuia        = CAN_GUIA.includes(perfil.perfil)
+  const canObs         = true
+  const canRebajado    = CAN_REBAJADO.includes(perfil.perfil)
+  const canEliminarRep = CAN_ELIMINAR_REP.includes(perfil.perfil)
+  const canProveedor   = CAN_PROVEEDOR.includes(perfil.perfil)
+  const esAdmin        = perfil.perfil === 'admin'
 
   const listos    = localRep.filter(r => r.listo_despacho).length
   const despachados = localRep.filter(r => r.despachado_ok).length
@@ -377,12 +425,14 @@ export default function OrdenDetalle({
               <tr className="bg-gray-50 border-b border-gray-100">
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Repuesto</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Código</th>
+                {canProveedor && <th className="px-4 py-3 text-left font-medium text-gray-500">Proveedor</th>}
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Calidad</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Cant.</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Días</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Total</th>
                 <th className="px-4 py-3 text-center font-medium text-gray-500">Listo despacho</th>
                 <th className="px-4 py-3 text-center font-medium text-gray-500">Despachado OK</th>
+                {canEliminarRep && <th className="px-4 py-3"></th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -390,6 +440,19 @@ export default function OrdenDetalle({
                 <tr key={r.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 font-medium">{r.nombre_repuesto}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{r.codigo_repuesto ?? '—'}</td>
+                  {canProveedor && (
+                    <td className="px-4 py-3">
+                      <select
+                        value={r.proveedor ?? ''}
+                        disabled={provLoading === r.id}
+                        onChange={e => actualizarProveedor(r, e.target.value)}
+                        className="border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 min-w-[130px]"
+                      >
+                        <option value="">Sin proveedor</option>
+                        {PROVEEDORES.map(p => <option key={p} value={p}>{p}</option>)}
+                      </select>
+                    </td>
+                  )}
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${r.calidad === 'ORIGINAL' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
                       {r.calidad}
@@ -424,6 +487,27 @@ export default function OrdenDetalle({
                       {r.despachado_ok ? '✓' : ''}
                     </button>
                   </td>
+                  {canEliminarRep && (
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        disabled={elimRepLoading === r.id}
+                        onClick={() => eliminarRepuesto(r)}
+                        className="w-8 h-8 rounded-lg border border-red-400 bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 transition disabled:opacity-40 flex items-center justify-center mx-auto"
+                        title="Eliminar repuesto"
+                      >
+                        {elimRepLoading === r.id ? (
+                          <svg className="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        )}
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -474,16 +558,19 @@ export default function OrdenDetalle({
           <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
             {auditoria.map((a: any) => {
               const campoLabel: Record<string, string> = {
-                listo_despacho: 'Listo para despacho',
-                despachado_ok:  'Despachado OK',
-                ejecutivo_id:   'Ejecutivo asignado',
-                estado:         'Estado',
-                guia:           'Guía de despacho',
-                observaciones:  'Observaciones',
+                listo_despacho:     'Listo para despacho',
+                despachado_ok:      'Despachado OK',
+                ejecutivo_id:       'Ejecutivo asignado',
+                estado:             'Estado',
+                guia:               'Guía de despacho',
+                observaciones:      'Observaciones',
+                repuesto_eliminado: 'Repuesto eliminado',
+                proveedor:          'Proveedor',
               }
               const formatVal = (v: string) => {
-                if (v === 'true')  return { txt: 'Sí',  cls: 'text-green-600' }
-                if (v === 'false') return { txt: 'No',  cls: 'text-red-500' }
+                if (v === 'true')     return { txt: 'Sí',       cls: 'text-green-600' }
+                if (v === 'false')    return { txt: 'No',       cls: 'text-red-500' }
+                if (v === 'eliminado') return { txt: 'eliminado', cls: 'text-red-600 font-semibold' }
                 if (!v || v === 'null') return { txt: 'Sin asignar', cls: 'text-gray-400' }
                 return { txt: v, cls: 'text-gray-700' }
               }
