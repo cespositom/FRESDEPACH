@@ -27,9 +27,9 @@ const CAN_ELIMINAR_REP = ['admin', 'supervisor']
 const CAN_PROVEEDOR = ['admin', 'supervisor']
 
 export default function OrdenDetalle({
-  orden, repuestos, ejecutivos, auditoria, perfil
+  orden, repuestos, ejecutivos, auditoria, perfil, proveedores
 }: {
-  orden: any; repuestos: Repuesto[]; ejecutivos: any[]; auditoria: any[]; perfil: Perfil
+  orden: any; repuestos: Repuesto[]; ejecutivos: any[]; auditoria: any[]; perfil: Perfil; proveedores: string[]
 }) {
   const router = useRouter()
   const supabase = createBrowserSupabase()
@@ -45,6 +45,7 @@ export default function OrdenDetalle({
   const [rebajadoLoading, setRebajadoLoading] = useState(false)
   const [accionLoading, setAccionLoading] = useState<'anular' | 'eliminar' | null>(null)
   const [elimRepLoading, setElimRepLoading] = useState<number | null>(null)
+  const [provLoading, setProvLoading] = useState<number | null>(null)
 
   async function toggleField(rep: Repuesto, field: 'listo_despacho' | 'despachado_ok') {
     setLoading(rep.id)
@@ -156,6 +157,27 @@ export default function OrdenDetalle({
     await fetch(`/api/ordenes/${orden.id}/eliminar`, { method: 'DELETE' })
     setAccionLoading(null)
     router.push('/ordenes')
+  }
+
+  async function actualizarProveedor(rep: Repuesto, nuevoProveedor: string) {
+    setProvLoading(rep.id)
+    const valor = nuevoProveedor || null
+    const { error } = await supabase
+      .from('repuestos_orden')
+      .update({ proveedor: valor })
+      .eq('id', rep.id)
+    if (!error) {
+      await supabase.from('auditoria').insert({
+        tabla: 'ordenes',
+        registro_id: orden.id,
+        campo: 'proveedor',
+        valor_anterior: rep.proveedor ?? 'Sin proveedor',
+        valor_nuevo: valor ?? 'Sin proveedor',
+        usuario_nombre: perfil.nombre,
+      })
+      setLocalRep(prev => prev.map(r => r.id === rep.id ? { ...r, proveedor: valor } : r))
+    }
+    setProvLoading(null)
   }
 
   async function eliminarRepuesto(rep: Repuesto) {
@@ -414,10 +436,15 @@ export default function OrdenDetalle({
                   <td className="px-4 py-3 text-gray-500 text-xs">{r.codigo_repuesto ?? '—'}</td>
                   {canProveedor && (
                     <td className="px-4 py-3">
-                      {r.proveedor
-                        ? <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full font-medium">{r.proveedor}</span>
-                        : <span className="text-xs text-gray-400">—</span>
-                      }
+                      <select
+                        value={r.proveedor ?? ''}
+                        disabled={provLoading === r.id}
+                        onChange={e => actualizarProveedor(r, e.target.value)}
+                        className="border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 min-w-[130px]"
+                      >
+                        <option value="">Sin proveedor</option>
+                        {proveedores.map(p => <option key={p} value={p}>{p}</option>)}
+                      </select>
                     </td>
                   )}
                   <td className="px-4 py-3">
