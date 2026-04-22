@@ -22,6 +22,13 @@ export default async function OrdenPage({ params }: { params: Promise<{ id: stri
     .eq('orden_id', id)
     .order('id')
 
+  const { data: proveedoresDB } = await (supabase as any)
+    .from('proveedores')
+    .select('nombre')
+    .eq('activo', true)
+    .order('nombre')
+  const proveedores: string[] = (proveedoresDB ?? []).map((p: any) => p.nombre)
+
   // Ejecutivos disponibles (para asignar) - todos los usuarios activos
   const { data: ejecutivos } = await supabase
     .from('perfiles')
@@ -62,6 +69,7 @@ export default async function OrdenPage({ params }: { params: Promise<{ id: stri
       ejecutivos={ejecutivos ?? []}
       auditoria={auditoriaOrden}
       perfil={perfil!}
+      proveedores={proveedores}
     />
   )
 }
