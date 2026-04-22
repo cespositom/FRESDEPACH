@@ -2,14 +2,14 @@
 import { useState } from 'react'
 import { createBrowserSupabase } from '@/lib/supabase'
 
-const PROVEEDORES = ['ALSACIA', 'REFAX', '4RUEDAS', 'BICIMOTO', 'MANNHEIM', 'OTRO PROVEEDOR']
-
 export default function ProveedorSelect({
   repuestoId,
   inicial,
+  proveedores,
 }: {
   repuestoId: number
   inicial: string | null
+  proveedores: string[]
 }) {
   const [valor, setValor]     = useState(inicial ?? '')
   const [loading, setLoading] = useState(false)
@@ -34,7 +34,7 @@ export default function ProveedorSelect({
       className="border border-gray-300 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white disabled:opacity-50 min-w-[130px]"
     >
       <option value="">Sin proveedor</option>
-      {PROVEEDORES.map(p => <option key={p} value={p}>{p}</option>)}
+      {proveedores.map(p => <option key={p} value={p}>{p}</option>)}
     </select>
   )
 }
