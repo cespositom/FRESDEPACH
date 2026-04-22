@@ -2,6 +2,7 @@ import { getPerfil, createServerSupabase } from '@/lib/server'
 import Link from 'next/link'
 import EncargadoToggle from './EncargadoToggle'
 import ListoDespachoToggle from './ListoDespachoToggle'
+import ProveedorSelect from './ProveedorSelect'
 
 export default async function RepuestosPendientesPage({
   searchParams,
@@ -18,7 +19,7 @@ export default async function RepuestosPendientesPage({
   const { data: repuestos } = await (supabase as any)
     .from('repuestos_orden')
     .select(`
-      id, nombre_repuesto, codigo_repuesto, cantidad, encargado, listo_despacho, calidad,
+      id, nombre_repuesto, codigo_repuesto, cantidad, encargado, listo_despacho, calidad, proveedor,
       orden:ordenes_con_vencimiento (
         id, numero_orden, numero_siniestro, dias_restantes,
         ejecutivo_id, ejecutivo_nombre, estado,
@@ -226,6 +227,7 @@ export default async function RepuestosPendientesPage({
                   <tr className="border-b border-gray-100">
                     <th className="px-4 py-2.5 text-left font-medium text-gray-400 text-xs w-full">Repuesto</th>
                     <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs w-px whitespace-nowrap">Calidad</th>
+                    {esAdminSup && <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs w-px whitespace-nowrap">Proveedor</th>}
                     <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs w-px whitespace-nowrap">Encargado</th>
                     <th className="px-4 py-2.5 text-right font-medium text-gray-400 text-xs w-px whitespace-nowrap pr-5">Recepcionado</th>
                   </tr>
@@ -242,6 +244,14 @@ export default async function RepuestosPendientesPage({
                           {r.calidad}
                         </span>
                       </td>
+                      {esAdminSup && (
+                        <td className="px-4 py-3 text-right w-px whitespace-nowrap">
+                          <ProveedorSelect
+                            repuestoId={r.id}
+                            inicial={r.proveedor ?? null}
+                          />
+                        </td>
+                      )}
                       <td className="px-4 py-3 text-right w-px whitespace-nowrap">
                         <EncargadoToggle
                           repuestoId={r.id}
