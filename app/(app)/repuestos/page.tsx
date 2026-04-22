@@ -13,6 +13,13 @@ export default async function RepuestosPendientesPage({
   const perfil  = await getPerfil()
   const supabase = await createServerSupabase()
 
+  const { data: proveedoresDB } = await (supabase as any)
+    .from('proveedores')
+    .select('nombre')
+    .eq('activo', true)
+    .order('nombre')
+  const proveedores: string[] = (proveedoresDB ?? []).map((p: any) => p.nombre)
+
   const esAdminSup  = ['admin', 'supervisor'].includes(perfil?.perfil ?? '')
   const puedeMarcarListo = ['admin', 'supervisor', 'ejecutivo'].includes(perfil?.perfil ?? '')
 
@@ -249,6 +256,7 @@ export default async function RepuestosPendientesPage({
                           <ProveedorSelect
                             repuestoId={r.id}
                             inicial={r.proveedor ?? null}
+                            proveedores={proveedores}
                           />
                         </td>
                       )}
