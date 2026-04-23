@@ -14,10 +14,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Solo se aceptan archivos PDF' }, { status: 400 })
   }
 
+  const apiKey = process.env.N8N_WEBHOOK_KEY
+  if (!apiKey) {
+    return NextResponse.json({ error: 'Configuración de API key faltante' }, { status: 500 })
+  }
+
   const n8nForm = new FormData()
   n8nForm.append('data', file, file.name)
 
-  const res = await fetch(N8N_WEBHOOK, { method: 'POST', body: n8nForm })
+  const res = await fetch(N8N_WEBHOOK, {
+    method: 'POST',
+    headers: { 'X-API-KEY': apiKey },
+    body: n8nForm,
+  })
   const json = await res.json().catch(() => ({}))
 
   if (!res.ok) {
