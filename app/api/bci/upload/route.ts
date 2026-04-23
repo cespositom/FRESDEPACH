@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const N8N_WEBHOOK = 'https://fresman-n8n.o56ldn.easypanel.host/webhook/bci-seguros/orden'
+const N8N_WEBHOOK = 'https://salbvador-fres-n8n.cysnsu.easypanel.host/webhook/bci-seguros/orden'
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData()
