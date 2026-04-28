@@ -131,8 +131,14 @@ export default function OrdenDetalle({
   async function toggleRebajado() {
     setRebajadoLoading(true)
     const nuevo = !rebajado
-    const { error } = await supabase.from('ordenes').update({ rebajado: nuevo }).eq('id', orden.id)
-    if (!error) {
+    const { data, error } = await supabase
+      .from('ordenes')
+      .update({ rebajado: nuevo })
+      .eq('id', orden.id)
+      .select('id')
+    if (error || !data || data.length === 0) {
+      alert('No se pudo actualizar el estado "rebajado". ' + (error?.message ?? 'La fila no fue modificada (revise permisos).'))
+    } else {
       setRebajado(nuevo)
       await supabase.from('auditoria').insert({
         tabla: 'ordenes', registro_id: orden.id, campo: 'rebajado',
