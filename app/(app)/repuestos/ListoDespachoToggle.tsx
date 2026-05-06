@@ -43,20 +43,30 @@ export default function ListoDespachoToggle({
 
         const todosListos = (todos ?? []).every((r: any) => r.listo_despacho)
         if (todosListos) {
-          const { data: logistica } = await (supabase as any)
-            .from('perfiles')
+          const { data: yaExiste } = await (supabase as any)
+            .from('notificaciones')
             .select('id')
-            .eq('perfil', 'logistica')
-          if (logistica?.length) {
-            await (supabase as any).from('notificaciones').insert(
-              logistica.map((u: any) => ({
-                usuario_id:   u.id,
-                tipo:         'listo_despacho',
-                mensaje:      `Orden ${ordenNumero} lista para despacho`,
-                orden_id:     ordenId,
-                orden_numero: ordenNumero,
-              }))
-            )
+            .eq('tipo', 'listo_despacho')
+            .eq('orden_id', ordenId)
+            .eq('leida', false)
+            .limit(1)
+          if (!yaExiste?.length) {
+            const { data: logistica } = await (supabase as any)
+              .from('perfiles')
+              .select('id')
+              .eq('perfil', 'logistica')
+              .eq('activo', true)
+            if (logistica?.length) {
+              await (supabase as any).from('notificaciones').insert(
+                logistica.map((u: any) => ({
+                  usuario_id:   u.id,
+                  tipo:         'listo_despacho',
+                  mensaje:      `Orden ${ordenNumero} lista para despacho`,
+                  orden_id:     ordenId,
+                  orden_numero: ordenNumero,
+                }))
+              )
+            }
           }
         }
       }

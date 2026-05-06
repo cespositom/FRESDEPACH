@@ -60,7 +60,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
         table: 'notificaciones',
         filter: `usuario_id=eq.${userId}`,
       }, (payload: any) => {
-        setNotifs(prev => [payload.new, ...prev])
+        setNotifs(prev => prev.some(n => n.id === payload.new.id) ? prev : [payload.new, ...prev])
       })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
@@ -84,6 +84,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
   function tipoIcon(tipo: string) {
     if (tipo === 'orden_asignada') return '📋'
     if (tipo === 'listo_despacho') return '📦'
+    if (tipo === 'orden_anulada')  return '🚫'
     return '🔔'
   }
 

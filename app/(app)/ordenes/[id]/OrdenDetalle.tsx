@@ -67,23 +67,32 @@ export default function OrdenDetalle({
       const updated = localRep.map(r => r.id === rep.id ? { ...r, [field]: newVal } : r)
       setLocalRep(updated)
 
-      // Todos listo_despacho → notificar a logística
+      // Todos listo_despacho → notificar a logística (sin duplicar si ya hay no-leídas)
       if (field === 'listo_despacho' && newVal && updated.every(r => r.listo_despacho)) {
-        const { data: logistica } = await (supabase as any)
-          .from('perfiles')
+        const { data: yaExiste } = await (supabase as any)
+          .from('notificaciones')
           .select('id')
-          .eq('perfil', 'logistica')
-          .eq('activo', true)
-        if (logistica?.length) {
-          await (supabase as any).from('notificaciones').insert(
-            logistica.map((u: any) => ({
-              usuario_id:   u.id,
-              tipo:         'listo_despacho',
-              mensaje:      `Orden ${orden.numero_orden} lista para despacho`,
-              orden_id:     orden.id,
-              orden_numero: orden.numero_orden,
-            }))
-          )
+          .eq('tipo', 'listo_despacho')
+          .eq('orden_id', orden.id)
+          .eq('leida', false)
+          .limit(1)
+        if (!yaExiste?.length) {
+          const { data: logistica } = await (supabase as any)
+            .from('perfiles')
+            .select('id')
+            .eq('perfil', 'logistica')
+            .eq('activo', true)
+          if (logistica?.length) {
+            await (supabase as any).from('notificaciones').insert(
+              logistica.map((u: any) => ({
+                usuario_id:   u.id,
+                tipo:         'listo_despacho',
+                mensaje:      `Orden ${orden.numero_orden} lista para despacho`,
+                orden_id:     orden.id,
+                orden_numero: orden.numero_orden,
+              }))
+            )
+          }
         }
       }
 
@@ -216,15 +225,25 @@ export default function OrdenDetalle({
       valor_nuevo: ejNuevo,
       usuario_nombre: perfil.nombre,
     })
-    // Notificar al ejecutivo asignado (solo si es un usuario real)
-    if (ejecutivoId) {
-      await (supabase as any).from('notificaciones').insert({
-        usuario_id:   ejecutivoId,
-        tipo:         'orden_asignada',
-        mensaje:      `Se te asignó la orden ${orden.numero_orden}`,
-        orden_id:     orden.id,
-        orden_numero: orden.numero_orden,
-      })
+    // Notificar al ejecutivo asignado (sin duplicar si ya hay no-leídas)
+    if (ejecutivoId && ejecutivoId !== orden.ejecutivo_id) {
+      const { data: yaExiste } = await (supabase as any)
+        .from('notificaciones')
+        .select('id')
+        .eq('tipo', 'orden_asignada')
+        .eq('orden_id', orden.id)
+        .eq('usuario_id', ejecutivoId)
+        .eq('leida', false)
+        .limit(1)
+      if (!yaExiste?.length) {
+        await (supabase as any).from('notificaciones').insert({
+          usuario_id:   ejecutivoId,
+          tipo:         'orden_asignada',
+          mensaje:      `Se te asignó la orden ${orden.numero_orden}`,
+          orden_id:     orden.id,
+          orden_numero: orden.numero_orden,
+        })
+      }
     }
     setEjLoading(false)
     router.refresh()
