@@ -49,10 +49,10 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
           </Link>
 
           {/* Links desktop */}
-          <div className="hidden md:flex gap-1">
+          <div className="hidden md:flex gap-0.5">
             {links.map(l => (
               <Link key={l.href} href={l.href}
-                className={`px-3 py-1.5 rounded-lg text-sm transition uppercase tracking-wide ${
+                className={`px-2.5 py-1 rounded-lg text-xs transition uppercase tracking-wide ${
                   pathname.startsWith(l.href)
                     ? 'bg-blue-50 text-blue-600 font-bold'
                     : 'text-gray-600 font-medium hover:bg-gray-100'
@@ -105,7 +105,7 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
           {links.map(l => (
             <Link key={l.href} href={l.href}
               onClick={() => setOpen(false)}
-              className={`block px-3 py-2 rounded-lg text-sm transition uppercase tracking-wide ${
+              className={`block px-3 py-1.5 rounded-lg text-xs transition uppercase tracking-wide ${
                 pathname.startsWith(l.href)
                   ? 'bg-blue-50 text-blue-600 font-bold'
                   : 'text-gray-600 font-medium hover:bg-gray-100'
