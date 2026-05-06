@@ -98,7 +98,14 @@ export default async function OrdenesPage({
                 </div>
               )}
               <div className="flex items-center justify-between pt-0.5">
-                <span className="text-xs text-gray-400">{new Date(o.fecha).toLocaleDateString('es-CL')}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">{new Date(o.fecha).toLocaleDateString('es-CL')}</span>
+                  {o.rebajado ? (
+                    <span title="Rebajado" className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-medium">Rebajado ✓</span>
+                  ) : (
+                    <span title="Pendiente de rebajar" className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-medium">Por rebajar ✕</span>
+                  )}
+                </div>
                 <Link href={`/ordenes/${o.id}`} className="text-blue-600 text-xs font-medium">Ver →</Link>
               </div>
             </div>
@@ -120,6 +127,7 @@ export default async function OrdenesPage({
                 {!esEjecutivo && <th className="px-4 py-3 text-left font-medium text-gray-500">Taller</th>}
                 {!esEjecutivo && <th className="px-4 py-3 text-left font-medium text-gray-500">Ejecutivo</th>}
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Estado</th>
+                <th className="px-4 py-3 text-center font-medium text-gray-500">Rebajado</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -145,6 +153,13 @@ export default async function OrdenesPage({
                       {o.estado}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-center">
+                    {o.rebajado ? (
+                      <span title="Rebajado" className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-100 text-green-700 text-sm font-bold">✓</span>
+                    ) : (
+                      <span title="Pendiente de rebajar" className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 text-red-600 text-sm font-bold">✕</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <Link href={`/ordenes/${o.id}`}
                       className="text-blue-600 hover:text-blue-800 text-xs font-medium whitespace-nowrap">
@@ -155,7 +170,7 @@ export default async function OrdenesPage({
               ))}
               {(!ordenes || ordenes.length === 0) && (
                 <tr>
-                  <td colSpan={esEjecutivo ? 6 : 8} className="px-4 py-8 text-center text-gray-400">
+                  <td colSpan={esEjecutivo ? 7 : 9} className="px-4 py-8 text-center text-gray-400">
                     No hay órdenes
                   </td>
                 </tr>

@@ -6,7 +6,7 @@ import FiltroDespacho from './FiltroDespacho'
 export default async function DespachoPorComunaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ region?: string; comuna?: string; orden?: string }>
+  searchParams: Promise<{ region?: string; comuna?: string; orden?: string; guia?: string }>
 }) {
   const params   = await searchParams
   const perfil   = await getPerfil()
@@ -63,13 +63,14 @@ export default async function DespachoPorComunaPage({
     new Set(todasRegiones.flatMap(r => Object.keys(porRegionFull[r])))
   ).sort()
 
-  // Aplicar filtro de número de orden
-  const filtroOrden  = params.orden?.trim() ?? ''
-  const ordenesFiltradas = filtroOrden
-    ? ordenes.filter((o: any) =>
-        String(o.numero_orden ?? '').toLowerCase().includes(filtroOrden.toLowerCase())
-      )
-    : ordenes
+  // Aplicar filtros de texto: número de orden y número de guía
+  const filtroOrden = params.orden?.trim() ?? ''
+  const filtroGuia  = params.guia?.trim() ?? ''
+  const ordenesFiltradas = ordenes.filter((o: any) => {
+    if (filtroOrden && !String(o.numero_orden ?? '').toLowerCase().includes(filtroOrden.toLowerCase())) return false
+    if (filtroGuia && !String(o.guia ?? '').toLowerCase().includes(filtroGuia.toLowerCase())) return false
+    return true
+  })
 
   // Agrupar con filtro de orden aplicado
   const porRegionConOrden: Record<string, Record<string, any[]>> = {}

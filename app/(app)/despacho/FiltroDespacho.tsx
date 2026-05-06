@@ -1,6 +1,6 @@
 'use client'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { FormEvent, useEffect, useState } from 'react'
 
 export default function FiltroDespacho({
   regiones,
@@ -14,39 +14,57 @@ export default function FiltroDespacho({
   const regionActual = searchParams.get('region') ?? ''
   const comunaActual = searchParams.get('comuna') ?? ''
   const ordenActual  = searchParams.get('orden') ?? ''
+  const guiaActual   = searchParams.get('guia') ?? ''
 
   const [ordenInput, setOrdenInput] = useState(ordenActual)
+  const [guiaInput,  setGuiaInput]  = useState(guiaActual)
 
   useEffect(() => { setOrdenInput(ordenActual) }, [ordenActual])
+  useEffect(() => { setGuiaInput(guiaActual) }, [guiaActual])
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const params = new URLSearchParams(searchParams.toString())
-      if (ordenInput.trim()) params.set('orden', ordenInput.trim())
-      else params.delete('orden')
-      router.push(`/despacho${params.size > 0 ? `?${params}` : ''}`)
-    }, 400)
-    return () => clearTimeout(timer)
-  }, [ordenInput])
-
-  function setFiltro(key: 'region' | 'comuna', value: string) {
+  function buildHref(updates: Record<string, string>) {
     const params = new URLSearchParams(searchParams.toString())
-    if (value) params.set(key, value)
-    else params.delete(key)
-    router.push(`/despacho${params.size > 0 ? `?${params}` : ''}`)
+    for (const [k, v] of Object.entries(updates)) {
+      if (v) params.set(k, v)
+      else params.delete(k)
+    }
+    return `/despacho${params.size > 0 ? `?${params}` : ''}`
   }
 
-  const hayFiltro = regionActual || comunaActual || ordenActual
+  function setFiltro(key: 'region' | 'comuna', value: string) {
+    router.push(buildHref({ [key]: value }))
+  }
+
+  function buscar(e: FormEvent) {
+    e.preventDefault()
+    router.push(buildHref({ orden: ordenInput.trim(), guia: guiaInput.trim() }))
+  }
+
+  function limpiar() {
+    setOrdenInput('')
+    setGuiaInput('')
+    router.push('/despacho')
+  }
+
+  const hayFiltro = regionActual || comunaActual || ordenActual || guiaActual
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <form onSubmit={buscar} className="flex flex-wrap items-center gap-3">
 
       <input
         type="text"
         value={ordenInput}
         onChange={e => setOrdenInput(e.target.value)}
-        placeholder="Buscar N° orden…"
-        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[160px]"
+        placeholder="N° orden…"
+        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[140px]"
+      />
+
+      <input
+        type="text"
+        value={guiaInput}
+        onChange={e => setGuiaInput(e.target.value)}
+        placeholder="N° guía…"
+        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[140px]"
       />
 
       <select
@@ -66,14 +84,22 @@ export default function FiltroDespacho({
         {comunas.map(c => <option key={c} value={c}>{c}</option>)}
       </select>
 
+      <button
+        type="submit"
+        className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700"
+      >
+        Buscar
+      </button>
+
       {hayFiltro && (
         <button
-          onClick={() => { setOrdenInput(''); router.push('/despacho') }}
+          type="button"
+          onClick={limpiar}
           className="text-xs text-gray-500 hover:text-gray-800 border border-gray-300 rounded-lg px-3 py-2 hover:bg-gray-50 transition"
         >
           Limpiar
         </button>
       )}
-    </div>
+    </form>
   )
 }

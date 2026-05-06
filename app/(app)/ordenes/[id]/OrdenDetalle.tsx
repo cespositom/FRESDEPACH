@@ -239,6 +239,7 @@ export default function OrdenDetalle({
   const canEliminarRep = CAN_ELIMINAR_REP.includes(perfil.perfil)
   const canProveedor   = CAN_PROVEEDOR.includes(perfil.perfil)
   const esAdmin        = perfil.perfil === 'admin'
+  const canAnular      = ['admin', 'supervisor'].includes(perfil.perfil)
 
   const listos    = localRep.filter(r => r.listo_despacho).length
   const despachados = localRep.filter(r => r.despachado_ok).length
@@ -293,7 +294,7 @@ export default function OrdenDetalle({
               ¿Está rebajado? {rebajado ? 'Sí' : 'No'}
             </button>
           )}
-          {esAdmin && orden.estado !== 'Anulada' && (
+          {canAnular && orden.estado !== 'Anulada' && (
             <button
               onClick={anularOrden}
               disabled={accionLoading !== null}
