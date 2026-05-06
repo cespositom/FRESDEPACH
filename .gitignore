@@ -16,3 +16,6 @@ out/
 
 # respaldos locales del flujo n8n (no versionar)
 n8n/
+
+# scripts SQL — sólo código de despliegue va al repo
+*.sql
