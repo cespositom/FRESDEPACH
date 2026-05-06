@@ -13,3 +13,6 @@ out/
 # misc
 .DS_Store
 *.pem
+
+# respaldos locales del flujo n8n (no versionar)
+n8n/
