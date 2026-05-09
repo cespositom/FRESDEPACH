@@ -35,8 +35,10 @@ export default function Navbar({ perfil }: { perfil: Perfil }) {
     ...(perfil.perfil !== 'logistica' ? [{ href: '/ordenes', label: 'Órdenes' }] : []),
     ...(['admin', 'supervisor'].includes(perfil.perfil) ? [{ href: '/anuladas', label: 'Anuladas' }] : []),
     ...(['admin', 'supervisor'].includes(perfil.perfil) ? [{ href: '/bci', label: 'Cargar' }] : []),
+    { href: '/quotesimport',     label: 'Cotizar Imp.' },
     ...(perfil.perfil === 'admin' ? [{ href: '/admin/usuarios', label: 'Usuarios' }] : []),
     ...(perfil.perfil === 'admin' ? [{ href: '/admin/proveedores', label: 'Proveedores' }] : []),
+    ...(perfil.perfil === 'admin' ? [{ href: '/admin/configuracion', label: 'Config' }] : []),
   ]
 
   return (

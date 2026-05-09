@@ -45,7 +45,10 @@ export async function middleware(request: NextRequest) {
     return supabaseResponse
   }
 
-  if (!user && !path.startsWith('/login')) {
+  const rutasPublicas = ['/login', '/forgot-password', '/reset-password']
+  const esPublica = rutasPublicas.some(r => path.startsWith(r))
+
+  if (!user && !esPublica) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
   if (user && path === '/login') {

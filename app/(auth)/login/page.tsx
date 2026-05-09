@@ -1,5 +1,6 @@
 'use client'
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import { loginAction } from './actions'
 
 export default function LoginPage() {
@@ -58,6 +59,12 @@ export default function LoginPage() {
           >
             {pending ? 'Ingresando...' : 'Ingresar'}
           </button>
+          <Link
+            href="/forgot-password"
+            className="block text-center text-sm text-blue-600 hover:text-blue-700"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
         </form>
       </div>
     </div>
