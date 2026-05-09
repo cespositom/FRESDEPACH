@@ -4,6 +4,8 @@ import { getSupabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
+const IVA_PCT = 19
+
 export async function POST(req: NextRequest) {
   const perfil = await getPerfil()
   if (!perfil) return NextResponse.json({ error: 'No autenticado' }, { status: 401 })
@@ -43,9 +45,11 @@ export async function POST(req: NextRequest) {
   const tipo_cambio_clp = Number(config.tipo_cambio_clp)
   const honorario_usd = Number(tarifa.honorario_usd)
 
-  const valor_con_recargo = valor_usd * (1 + recargo_pct / 100)
-  const total_usd = valor_con_recargo + honorario_usd
-  const total_clp = Math.round(total_usd * tipo_cambio_clp)
+  const monto_recargo_usd = valor_usd * recargo_pct / 100
+  const monto_iva_usd     = valor_usd * IVA_PCT / 100
+  const subtotal_usd      = valor_usd + monto_recargo_usd + monto_iva_usd
+  const total_usd         = subtotal_usd + honorario_usd
+  const total_clp         = Math.round(total_usd * tipo_cambio_clp)
 
   const { data: registro, error: insErr } = await db
     .from('cotizaciones_importacion')
@@ -69,8 +73,10 @@ export async function POST(req: NextRequest) {
     desglose: {
       valor_usd,
       recargo_pct,
-      monto_recargo_usd: Number((valor_usd * recargo_pct / 100).toFixed(2)),
-      valor_con_recargo_usd: Number(valor_con_recargo.toFixed(2)),
+      monto_recargo_usd: Number(monto_recargo_usd.toFixed(2)),
+      iva_pct: IVA_PCT,
+      monto_iva_usd: Number(monto_iva_usd.toFixed(2)),
+      subtotal_usd: Number(subtotal_usd.toFixed(2)),
       honorario_usd,
       total_usd: Number(total_usd.toFixed(2)),
       tipo_cambio_clp,

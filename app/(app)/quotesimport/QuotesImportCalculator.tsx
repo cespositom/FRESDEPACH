@@ -6,7 +6,9 @@ type Desglose = {
   valor_usd: number
   recargo_pct: number
   monto_recargo_usd: number
-  valor_con_recargo_usd: number
+  iva_pct: number
+  monto_iva_usd: number
+  subtotal_usd: number
   honorario_usd: number
   total_usd: number
   tipo_cambio_clp: number
@@ -121,7 +123,8 @@ export default function QuotesImportCalculator({
           <div className="space-y-3 text-sm">
             <Row label="Valor producto" value={`USD ${USD(resultado.valor_usd)}`} />
             <Row label={`Recargo ${resultado.recargo_pct}%`} value={`USD ${USD(resultado.monto_recargo_usd)}`} />
-            <Row label="Subtotal con recargo" value={`USD ${USD(resultado.valor_con_recargo_usd)}`} bold />
+            <Row label={`IVA ${resultado.iva_pct}%`} value={`USD ${USD(resultado.monto_iva_usd)}`} />
+            <Row label="Subtotal" value={`USD ${USD(resultado.subtotal_usd)}`} bold />
             <Row label="Honorarios desaduanamiento" value={`USD ${USD(resultado.honorario_usd)}`} />
             <div className="border-t border-gray-200 pt-3 space-y-1.5">
               <Row label="Total USD" value={`USD ${USD(resultado.total_usd)}`} bold />
