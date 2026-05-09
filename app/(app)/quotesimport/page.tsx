@@ -40,12 +40,15 @@ export default async function QuotesImportPage() {
         <h1 className="text-2xl font-bold text-gray-900">Cotización de importación</h1>
         <p className="text-gray-500 text-sm mt-1">
           Calcula el valor en pesos de un producto importado vía FEDEX o DHL.
+          El cálculo sirve para productos con proveedores autorizados con valor de flete a Chile incluido.
+          Productos de tamaño mediano y grande confirmar, ya que tienen recargos no considerados en esta calculadora.
         </p>
       </div>
       <QuotesImportCalculator
         config={config ?? { tipo_cambio_clp: 0, recargo_pct: 25 }}
         historial={historial}
         esAdminOSup={verHistorial}
+        esAdmin={perfil.perfil === 'admin'}
       />
     </div>
   )

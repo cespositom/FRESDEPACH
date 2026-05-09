@@ -31,10 +31,12 @@ export default function QuotesImportCalculator({
   config,
   historial: historialInicial,
   esAdminOSup,
+  esAdmin,
 }: {
   config: Config
   historial: Registro[]
   esAdminOSup: boolean
+  esAdmin: boolean
 }) {
   const [codigo, setCodigo] = useState('')
   const [valorUsd, setValorUsd] = useState('')
@@ -77,9 +79,11 @@ export default function QuotesImportCalculator({
         <form onSubmit={calcular} className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-gray-900">Datos del producto</h3>
-            <span className="text-xs text-gray-500">
-              TC: ${CLP(config.tipo_cambio_clp)} · Recargo: {config.recargo_pct}%
-            </span>
+            {esAdmin && (
+              <span className="text-xs text-gray-500">
+                TC: ${CLP(config.tipo_cambio_clp)} · Recargo: {config.recargo_pct}%
+              </span>
+            )}
           </div>
 
           <div>
@@ -131,7 +135,7 @@ export default function QuotesImportCalculator({
           <h3 className="font-semibold text-gray-900 mb-4">Resultado</h3>
           {!resultado ? (
             <p className="text-sm text-gray-400">Ingresa los datos y presiona <strong>Calcular</strong>.</p>
-          ) : (
+          ) : esAdmin ? (
             <div className="space-y-3 text-sm">
               <Row label="Valor producto" value={`USD ${USD(resultado.valor_usd)}`} />
               <Row label={`Recargo ${resultado.recargo_pct}%`} value={`USD ${USD(resultado.monto_recargo_usd)}`} />
@@ -145,6 +149,11 @@ export default function QuotesImportCalculator({
                 <div className="text-xs text-blue-700 uppercase tracking-wide">Total final</div>
                 <div className="text-2xl font-bold text-blue-900">${CLP(resultado.total_clp)} CLP</div>
               </div>
+            </div>
+          ) : (
+            <div className="bg-blue-50 rounded-lg px-4 py-6 text-center">
+              <div className="text-xs text-blue-700 uppercase tracking-wide">Total final</div>
+              <div className="text-3xl font-bold text-blue-900 mt-1">${CLP(resultado.total_clp)} CLP</div>
             </div>
           )}
         </div>
