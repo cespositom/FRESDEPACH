@@ -15,25 +15,6 @@ export default async function QuotesImportPage() {
     .eq('id', 1)
     .single()
 
-  const verHistorial = ['admin', 'supervisor'].includes(perfil.perfil)
-  let historial: any[] = []
-  if (verHistorial) {
-    const { data } = await db
-      .from('cotizaciones_importacion')
-      .select('*, perfiles:usuario_id (nombre)')
-      .order('created_at', { ascending: false })
-      .limit(50)
-    historial = data ?? []
-  } else {
-    const { data } = await db
-      .from('cotizaciones_importacion')
-      .select('*')
-      .eq('usuario_id', perfil.id)
-      .order('created_at', { ascending: false })
-      .limit(20)
-    historial = data ?? []
-  }
-
   return (
     <div className="space-y-5 max-w-4xl">
       <div>
@@ -46,8 +27,6 @@ export default async function QuotesImportPage() {
       </div>
       <QuotesImportCalculator
         config={config ?? { tipo_cambio_clp: 0, recargo_pct: 25 }}
-        historial={historial}
-        esAdminOSup={verHistorial}
         esAdmin={perfil.perfil === 'admin'}
       />
     </div>

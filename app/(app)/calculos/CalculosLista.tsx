@@ -5,6 +5,7 @@ import { useState, useTransition } from 'react'
 type Calculo = {
   id: number
   usuario_id: string
+  usuario_nombre: string
   codigo_producto: string
   valor_usd: number
   transportista: string
@@ -14,7 +15,6 @@ type Calculo = {
   total_usd: number
   total_clp: number
   created_at: string
-  perfiles?: { id: string; nombre: string } | null
 }
 
 type Ejecutivo = { id: string; nombre: string }
@@ -118,7 +118,7 @@ export default function CalculosLista({
               ) : calculos.map(c => (
                 <tr key={c.id} className="hover:bg-gray-50">
                   <td className="px-4 py-2 text-xs text-gray-500 whitespace-nowrap">{new Date(c.created_at).toLocaleString('es-CL')}</td>
-                  {esAdminOSup && <td className="px-4 py-2 text-gray-700">{c.perfiles?.nombre ?? '—'}</td>}
+                  {esAdminOSup && <td className="px-4 py-2 text-gray-700">{c.usuario_nombre}</td>}
                   <td className="px-4 py-2 font-mono text-xs">{c.codigo_producto}</td>
                   <td className="px-4 py-2 text-right">{USD(Number(c.valor_usd))}</td>
                   <td className="px-4 py-2"><span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{c.transportista}</span></td>

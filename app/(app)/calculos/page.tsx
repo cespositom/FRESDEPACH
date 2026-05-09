@@ -24,7 +24,7 @@ export default async function CalculosPage({
 
   let query = db
     .from('cotizaciones_importacion')
-    .select('*, perfiles:usuario_id (id, nombre)')
+    .select('*')
     .order('created_at', { ascending: false })
     .limit(500)
 
@@ -37,7 +37,23 @@ export default async function CalculosPage({
     query = query.ilike('codigo_producto', `%${filtroCodigo}%`)
   }
 
-  const { data: calculos } = await query
+  const { data: cotizaciones } = await query
+
+  // Resolver nombres de usuario por separado (no hay FK de cotizaciones → perfiles)
+  const ids = Array.from(new Set((cotizaciones ?? []).map((c: any) => c.usuario_id).filter(Boolean)))
+  let perfilesMap = new Map<string, string>()
+  if (ids.length) {
+    const { data: pfs } = await db
+      .from('perfiles')
+      .select('id, nombre')
+      .in('id', ids)
+    perfilesMap = new Map((pfs ?? []).map((p: any) => [p.id as string, p.nombre as string]))
+  }
+
+  const calculos = (cotizaciones ?? []).map((c: any) => ({
+    ...c,
+    usuario_nombre: perfilesMap.get(c.usuario_id) ?? '—',
+  }))
 
   let ejecutivos: { id: string; nombre: string }[] = []
   if (esAdminOSup) {
@@ -60,7 +76,7 @@ export default async function CalculosPage({
         </p>
       </div>
       <CalculosLista
-        calculos={calculos ?? []}
+        calculos={calculos}
         ejecutivos={ejecutivos}
         esAdminOSup={esAdminOSup}
         esAdmin={esAdmin}
