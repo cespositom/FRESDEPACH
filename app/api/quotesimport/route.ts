@@ -52,9 +52,10 @@ export async function POST(req: NextRequest) {
   const total_usd         = valor_usd + monto_recargo_usd + honorario_con_iva
   const total_clp         = Math.round(total_usd * tipo_cambio_clp)
 
+  // Precio venta sugerido: con_iva = total × (1 + margen); neto = con_iva / 1.19
   const precios_venta = MARGENES_VENTA.map(margen => {
-    const neto    = Math.round(total_clp * (1 + margen / 100))
-    const con_iva = Math.round(neto * (1 + IVA_PCT / 100))
+    const con_iva = Math.round(total_clp * (1 + margen / 100))
+    const neto    = Math.round(con_iva / (1 + IVA_PCT / 100))
     return { margen_pct: margen, neto_clp: neto, con_iva_clp: con_iva }
   })
 
