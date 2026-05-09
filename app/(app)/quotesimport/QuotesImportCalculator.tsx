@@ -146,13 +146,13 @@ export default function QuotesImportCalculator({
                 <Row label={`Tipo de cambio`} value={`$${CLP(resultado.tipo_cambio_clp)}`} muted />
               </div>
               <div className="bg-blue-50 rounded-lg px-4 py-3 mt-2">
-                <div className="text-xs text-blue-700 uppercase tracking-wide">Total final</div>
+                <div className="text-xs text-blue-700 uppercase tracking-wide">Total final C/IVA Chile</div>
                 <div className="text-2xl font-bold text-blue-900">${CLP(resultado.total_clp)} CLP</div>
               </div>
             </div>
           ) : (
             <div className="bg-blue-50 rounded-lg px-4 py-6 text-center">
-              <div className="text-xs text-blue-700 uppercase tracking-wide">Total final</div>
+              <div className="text-xs text-blue-700 uppercase tracking-wide">Total final C/IVA Chile</div>
               <div className="text-3xl font-bold text-blue-900 mt-1">${CLP(resultado.total_clp)} CLP</div>
             </div>
           )}
