@@ -6,13 +6,14 @@ type Desglose = {
   valor_usd: number
   recargo_pct: number
   monto_recargo_usd: number
+  honorario_usd: number
   iva_pct: number
   monto_iva_usd: number
-  subtotal_usd: number
-  honorario_usd: number
+  honorario_con_iva_usd: number
   total_usd: number
   tipo_cambio_clp: number
   total_clp: number
+  precios_venta: { margen_pct: number; neto_clp: number; con_iva_clp: number }[]
 }
 
 const CLP = (n: number) => n.toLocaleString('es-CL', { maximumFractionDigits: 0 })
@@ -58,7 +59,8 @@ export default function QuotesImportCalculator({
   }
 
   return (
-    <div className="grid md:grid-cols-2 gap-5">
+    <div className="space-y-5">
+      <div className="grid md:grid-cols-2 gap-5">
       {/* Formulario */}
       <form onSubmit={calcular} className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
         <div className="flex items-center justify-between">
@@ -123,9 +125,8 @@ export default function QuotesImportCalculator({
           <div className="space-y-3 text-sm">
             <Row label="Valor producto" value={`USD ${USD(resultado.valor_usd)}`} />
             <Row label={`Recargo ${resultado.recargo_pct}%`} value={`USD ${USD(resultado.monto_recargo_usd)}`} />
-            <Row label={`IVA ${resultado.iva_pct}%`} value={`USD ${USD(resultado.monto_iva_usd)}`} />
-            <Row label="Subtotal" value={`USD ${USD(resultado.subtotal_usd)}`} bold />
-            <Row label="Honorarios desaduanamiento" value={`USD ${USD(resultado.honorario_usd)}`} />
+            <Row label="Honorario desaduanamiento" value={`USD ${USD(resultado.honorario_usd)}`} />
+            <Row label={`IVA ${resultado.iva_pct}% sobre honorario`} value={`USD ${USD(resultado.monto_iva_usd)}`} />
             <div className="border-t border-gray-200 pt-3 space-y-1.5">
               <Row label="Total USD" value={`USD ${USD(resultado.total_usd)}`} bold />
               <Row label={`Tipo de cambio`} value={`$${CLP(resultado.tipo_cambio_clp)}`} muted />
@@ -142,6 +143,33 @@ export default function QuotesImportCalculator({
           </div>
         )}
       </div>
+      </div>
+
+      {resultado && (
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-baseline justify-between mb-4">
+            <h3 className="font-semibold text-gray-900">Precio de venta sugerido</h3>
+            <span className="text-xs text-gray-500">Sobre Total final C/IVA Chile (${CLP(resultado.total_clp)})</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {resultado.precios_venta.map(p => (
+              <div key={p.margen_pct} className="border border-gray-200 rounded-xl p-4 hover:border-blue-400 transition">
+                <div className="text-xs uppercase tracking-wide text-gray-500 mb-2">
+                  Margen {p.margen_pct}%
+                </div>
+                <div className="text-xs text-gray-500">Neto</div>
+                <div className="text-lg font-semibold text-gray-700">${CLP(p.neto_clp)}</div>
+                <div className="border-t border-gray-100 my-3"></div>
+                <div className="text-xs text-gray-500">Con IVA</div>
+                <div className="flex items-baseline gap-1.5">
+                  <div className="text-2xl font-bold text-blue-900">${CLP(p.con_iva_clp)}</div>
+                  <span className="text-xs font-medium text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">+IVA</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

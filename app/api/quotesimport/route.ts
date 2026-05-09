@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from '@/lib/supabase'
 export const dynamic = 'force-dynamic'
 
 const IVA_PCT = 19
+const MARGENES_VENTA = [30, 40, 50] as const
 
 export async function POST(req: NextRequest) {
   const perfil = await getPerfil()
@@ -46,10 +47,16 @@ export async function POST(req: NextRequest) {
   const honorario_usd = Number(tarifa.honorario_usd)
 
   const monto_recargo_usd = valor_usd * recargo_pct / 100
-  const monto_iva_usd     = valor_usd * IVA_PCT / 100
-  const subtotal_usd      = valor_usd + monto_recargo_usd + monto_iva_usd
-  const total_usd         = subtotal_usd + honorario_usd
+  const monto_iva_usd     = honorario_usd * IVA_PCT / 100   // IVA solo sobre honorario
+  const honorario_con_iva = honorario_usd + monto_iva_usd
+  const total_usd         = valor_usd + monto_recargo_usd + honorario_con_iva
   const total_clp         = Math.round(total_usd * tipo_cambio_clp)
+
+  const precios_venta = MARGENES_VENTA.map(margen => {
+    const neto    = Math.round(total_clp * (1 + margen / 100))
+    const con_iva = Math.round(neto * (1 + IVA_PCT / 100))
+    return { margen_pct: margen, neto_clp: neto, con_iva_clp: con_iva }
+  })
 
   const { data: registro, error: insErr } = await db
     .from('cotizaciones_importacion')
@@ -74,13 +81,14 @@ export async function POST(req: NextRequest) {
       valor_usd,
       recargo_pct,
       monto_recargo_usd: Number(monto_recargo_usd.toFixed(2)),
+      honorario_usd,
       iva_pct: IVA_PCT,
       monto_iva_usd: Number(monto_iva_usd.toFixed(2)),
-      subtotal_usd: Number(subtotal_usd.toFixed(2)),
-      honorario_usd,
+      honorario_con_iva_usd: Number(honorario_con_iva.toFixed(2)),
       total_usd: Number(total_usd.toFixed(2)),
       tipo_cambio_clp,
       total_clp,
+      precios_venta,
     },
   })
 }
