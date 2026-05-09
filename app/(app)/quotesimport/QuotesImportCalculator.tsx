@@ -153,13 +153,13 @@ export default function QuotesImportCalculator({
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {resultado.precios_venta.map(p => (
-              <div key={p.margen_pct} className="border border-gray-200 rounded-xl p-5 hover:border-blue-400 transition text-center">
-                <div className="text-xs uppercase tracking-wide text-gray-500 mb-3">
-                  Margen {p.margen_pct}%
+              <div key={p.margen_pct} className="bg-red-50 rounded-lg px-4 py-6 text-center">
+                <div className="text-xs text-red-700 uppercase tracking-wide">
+                  Precio venta margen {p.margen_pct}%
                 </div>
-                <div className="flex items-baseline justify-center gap-2">
-                  <div className="text-2xl font-bold text-blue-900">${CLP(p.neto_clp)}</div>
-                  <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">+IVA</span>
+                <div className="flex items-baseline justify-center gap-2 mt-1">
+                  <div className="text-2xl font-bold text-red-900">${CLP(p.neto_clp)}</div>
+                  <span className="text-xs font-semibold text-red-700">+IVA</span>
                 </div>
               </div>
             ))}
