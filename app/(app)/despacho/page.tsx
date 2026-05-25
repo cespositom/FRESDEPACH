@@ -18,6 +18,7 @@ export default async function DespachoPorComunaPage({
     .select('*')
     .gt('total_repuestos', 0)
     .neq('estado', 'Entregado')
+    .neq('estado', 'Anulada')
     .order('dias_restantes', { ascending: true })
 
   if (perfil?.perfil === 'ejecutivo') {
